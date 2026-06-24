@@ -1298,7 +1298,7 @@
                 <div class="sidebar-logo-area">
                     <span class="logo-icon-sm">📅</span>
                     <span class="sidebar-app-title">My Calendar</span>
-                    <span class="sidebar-version">v1.0.23</span>
+                    <span class="sidebar-version">v1.0.24</span>
                 </div>
                 <div id="auth-user" class="sidebar-auth-user"></div>
                 <div class="sidebar-header-actions">
@@ -1343,7 +1343,7 @@
         const CONFIG = {
             // Google Cloud Console → API 및 서비스 → 사용자 인증 정보 → OAuth 2.0 클라이언트 ID
             CLIENT_ID: '678232319527-4eovfst68dd7v6938a65abp45sp6l3l5.apps.googleusercontent.com',
-            SCOPES: 'https://www.googleapis.com/auth/calendar',
+            SCOPES: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/tasks.readonly',
         };
     </script>
     <!-- ================================================================ -->
@@ -1395,7 +1395,10 @@
         function gapiLoaded() {
             gapi.load('client', async () => {
                 await gapi.client.init({
-                    discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'],
+                    discoveryDocs: [
+                        'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest',
+                        'https://www.googleapis.com/discovery/v1/apis/tasks/v1/rest'
+                    ],
                 });
                 gapiInited = true;
                 checkBothReady();
@@ -1500,7 +1503,7 @@
 
         // ── Data loading ───────────────────────────────────────────────────
         async function loadCalendars() {
-            const ALLOWED_CALENDARS = ['윤호', '윤서', '엄마', '아빠', '가족', '주식', '기타', '할 일', 'Tasks', '대한민국의 휴일', '대한민국 공휴일'];
+            const ALLOWED_CALENDARS = ['윤호', '윤서', '엄마', '아빠', '가족', '주식', '기타', '대한민국의 휴일', '대한민국 공휴일'];
             try {
                 const resp = await gapi.client.calendar.calendarList.list();
                 colorIndex = 0;
@@ -1517,6 +1520,15 @@
                         };
                     }
                 });
+
+                // Register virtual tasks calendar
+                calendars['tasks_virtual_calendar'] = {
+                    summary: '할 일',
+                    color: '#0097a7',
+                    visible: true,
+                    canEdit: false
+                };
+
                 renderCalendarsList();
             } catch (e) {
                 console.warn('calendarList failed:', e);
@@ -1553,10 +1565,12 @@
             const rangeEnd = new Date(viewDate.getFullYear(), viewDate.getMonth() + 2, 0, 23, 59, 59);
 
             let ids = Object.keys(calendars);
-            if (ids.length === 0) ids = ['primary'];
+            let calendarIds = ids.filter(id => id !== 'tasks_virtual_calendar');
+            if (calendarIds.length === 0) calendarIds = ['primary'];
 
             try {
-                const results = await Promise.all(ids.map(id =>
+                // 1. Fetch Calendar Events
+                const calResults = await Promise.all(calendarIds.map(id =>
                     gapi.client.calendar.events.list({
                         calendarId: id,
                         timeMin: rangeStart.toISOString(),
@@ -1581,7 +1595,57 @@
                         }));
                     }).catch(() => [])
                 ));
-                allEvents = results.flat();
+                let calendarEvents = calResults.flat();
+
+                // 2. Fetch Tasks if the virtual tasks calendar is visible
+                let taskEvents = [];
+                const tasksCal = calendars['tasks_virtual_calendar'];
+                if (tasksCal && tasksCal.visible && gapi.client.tasks) {
+                    try {
+                        const listsResp = await gapi.client.tasks.tasklists.list();
+                        const lists = listsResp.result.items || [];
+                        const tasksListsResults = await Promise.all(lists.map(async (list) => {
+                            try {
+                                const tasksResp = await gapi.client.tasks.tasks.list({
+                                    tasklist: list.id,
+                                    showCompleted: true,
+                                    showHidden: true
+                                });
+                                const tasks = tasksResp.result.items || [];
+                                return tasks.filter(task => {
+                                    if (!task.due) return false;
+                                    const title = (task.title || '').toLowerCase();
+                                    const notes = (task.notes || '').toLowerCase();
+                                    return title.includes('cash') || notes.includes('cash');
+                                }).map(task => {
+                                    // YYYY-MM-DD parsing
+                                    const dueYMD = task.due.split('T')[0];
+                                    const dueD = new Date(dueYMD);
+                                    const endD = new Date(dueD);
+                                    endD.setDate(endD.getDate() + 1);
+
+                                    return {
+                                        id: task.id,
+                                        summary: task.title,
+                                        description: task.notes || '',
+                                        start: { date: dueYMD },
+                                        end: { date: formatDateISO(endD) },
+                                        _calId: 'tasks_virtual_calendar',
+                                        _color: '#0097a7',
+                                        status: task.status
+                                    };
+                                });
+                            } catch (e) {
+                                return [];
+                            }
+                        }));
+                        taskEvents = tasksListsResults.flat();
+                    } catch (err) {
+                        console.warn('Failed to fetch tasks:', err);
+                    }
+                }
+
+                allEvents = calendarEvents.concat(taskEvents);
             } catch (e) {
                 if (e.status === 401) {
                     // Token expired
@@ -1908,6 +1972,18 @@
                 container.innerHTML = '';
                 return;
             }
+
+            // Sort calendars by custom order: 가족, 아빠, 엄마, 윤호, 윤서, 기타, 주식, 할 일
+            const CALENDAR_ORDER = ['가족', '아빠', '엄마', '윤호', '윤서', '기타', '주식', '할 일'];
+            ids.sort((a, b) => {
+                const sumA = calendars[a] ? calendars[a].summary : '';
+                const sumB = calendars[b] ? calendars[b].summary : '';
+                let idxA = CALENDAR_ORDER.indexOf(sumA);
+                let idxB = CALENDAR_ORDER.indexOf(sumB);
+                if (idxA === -1) idxA = 999;
+                if (idxB === -1) idxB = 999;
+                return idxA - idxB;
+            });
 
             let html = `
         <div class="cal-list-title" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
