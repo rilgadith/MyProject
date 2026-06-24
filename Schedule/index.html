@@ -27,6 +27,10 @@
             box-sizing: border-box;
         }
 
+        html {
+            overflow-x: hidden; /* Prevent horizontal scroll completely */
+        }
+
         body {
             font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', -apple-system, sans-serif;
             background: #f8f9fa;
@@ -557,7 +561,9 @@
 
         /* ── Right sidebar ────────────────────────────────── */
         .sidebar-right {
-            width: 320px;
+            width: 30%;
+            min-width: 240px;
+            max-width: 320px;
             border-left: 1px solid #e0e0e0;
             background: white;
             display: flex;
@@ -1006,15 +1012,7 @@
             }
         }
 
-        /* 가로 폭이 약간 좁은 태블릿 가로 모드에서 달력 가로 폭을 확보하기 위해 사이드바 슬림화 */
-        @media (max-width: 1100px) and (orientation: landscape) {
-            .sidebar-left {
-                width: 180px;
-            }
-            .sidebar-right {
-                width: 270px;
-            }
-        }
+        /* 비율(%) 기반 사이드바로 조절되므로 기존 픽셀 기반 고정폭 미디어 쿼리는 제거합니다. */
     </style>
 </head>
 
@@ -1025,7 +1023,7 @@
         <div class="header-logo">
             <div class="logo-icon">📅</div>
         </div>
-        <h1>My Calendar <span style="font-size: 11px; color: #5f6368; font-weight: normal; margin-left: 4px; vertical-align: middle;">v1.0.4</span></h1>
+        <h1>My Calendar <span style="font-size: 11px; color: #5f6368; font-weight: normal; margin-left: 4px; vertical-align: middle;">v1.0.6</span></h1>
         <span id="auth-user"></span>
         <div class="header-right">
             <button id="refresh-btn" onclick="onRefresh()" title="새로고침">↻</button>
