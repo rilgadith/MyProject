@@ -1022,7 +1022,7 @@
         <div class="header-logo">
             <div class="logo-icon">📅</div>
         </div>
-        <h1>My Calendar</h1>
+        <h1>My Calendar <span style="font-size: 11px; color: #5f6368; font-weight: normal; margin-left: 4px; vertical-align: middle;">v1.0.2</span></h1>
         <span id="auth-user"></span>
         <div class="header-right">
             <button id="refresh-btn" onclick="onRefresh()" title="새로고침">↻</button>
@@ -1303,18 +1303,21 @@
 
         // ── Data loading ───────────────────────────────────────────────────
         async function loadCalendars() {
+            const ALLOWED_CALENDARS = ['윤호', '윤서', '엄마', '아빠', '가족', '주식', '대한민국의 휴일', '대한민국 공휴일'];
             try {
                 const resp = await gapi.client.calendar.calendarList.list();
                 colorIndex = 0;
                 calendars = {};
                 (resp.result.items || []).forEach(cal => {
-                    const c = cal.backgroundColor || DEFAULT_COLORS[colorIndex++ % DEFAULT_COLORS.length];
-                    calendars[cal.id] = {
-                        summary: cal.summary,
-                        color: c,
-                        visible: true,
-                        canEdit: cal.accessRole === 'owner' || cal.accessRole === 'writer'
-                    };
+                    if (ALLOWED_CALENDARS.includes(cal.summary)) {
+                        const c = cal.backgroundColor || DEFAULT_COLORS[colorIndex++ % DEFAULT_COLORS.length];
+                        calendars[cal.id] = {
+                            summary: cal.summary,
+                            color: c,
+                            visible: true,
+                            canEdit: cal.accessRole === 'owner' || cal.accessRole === 'writer'
+                        };
+                    }
                 });
                 renderCalendarsList();
             } catch (e) {
