@@ -1114,6 +1114,52 @@
             }
         }
 
+        /* ── Weekday selector for custom recurrence ── */
+        .weekday-selector {
+            display: flex;
+            gap: 6px;
+            margin-top: 4px;
+            justify-content: space-between;
+        }
+        .weekday-checkbox {
+            cursor: pointer;
+            position: relative;
+            flex: 1;
+            text-align: center;
+        }
+        .weekday-checkbox input {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .weekday-checkbox span {
+            display: block;
+            width: 32px;
+            height: 32px;
+            line-height: 30px;
+            border-radius: 50%;
+            border: 1px solid #dadce0;
+            font-size: 12px;
+            color: #5f6368;
+            text-align: center;
+            margin: 0 auto;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+            user-select: none;
+        }
+        .weekday-checkbox input:checked + span {
+            background: #1a73e8;
+            color: white;
+            border-color: #1a73e8;
+            font-weight: 500;
+        }
+        .weekday-checkbox input:disabled + span {
+            background: #f1f3f4;
+            color: #bdc1c6;
+            border-color: #dadce0;
+            cursor: not-allowed;
+        }
+
         /* 비율(%) 기반 사이드바로 조절되므로 기존 픽셀 기반 고정폭 미디어 쿼리는 제거합니다. */
     </style>
 </head>
@@ -1199,13 +1245,27 @@
 
                     <div class="form-group">
                         <label for="event-recurrence">반복</label>
-                        <select id="event-recurrence">
+                        <select id="event-recurrence" onchange="toggleRecurrenceFields()">
                             <option value="">반복 안함</option>
                             <option value="DAILY">매일</option>
                             <option value="WEEKLY">매주</option>
+                            <option value="WEEKLY_BYDAY">매주 특정 요일</option>
                             <option value="MONTHLY">매월</option>
                             <option value="YEARLY">매년</option>
                         </select>
+                    </div>
+
+                    <div class="form-group" id="event-byday-group" style="display:none;">
+                        <label>반복 요일</label>
+                        <div class="weekday-selector">
+                            <label class="weekday-checkbox"><input type="checkbox" value="SU"><span>일</span></label>
+                            <label class="weekday-checkbox"><input type="checkbox" value="MO"><span>월</span></label>
+                            <label class="weekday-checkbox"><input type="checkbox" value="TU"><span>화</span></label>
+                            <label class="weekday-checkbox"><input type="checkbox" value="WE"><span>수</span></label>
+                            <label class="weekday-checkbox"><input type="checkbox" value="TH"><span>목</span></label>
+                            <label class="weekday-checkbox"><input type="checkbox" value="FR"><span>금</span></label>
+                            <label class="weekday-checkbox"><input type="checkbox" value="SA"><span>토</span></label>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -1238,7 +1298,7 @@
                 <div class="sidebar-logo-area">
                     <span class="logo-icon-sm">📅</span>
                     <span class="sidebar-app-title">My Calendar</span>
-                    <span class="sidebar-version">v1.0.19</span>
+                    <span class="sidebar-version">v1.0.20</span>
                 </div>
                 <div id="auth-user" class="sidebar-auth-user"></div>
                 <div class="sidebar-header-actions">
@@ -1877,6 +1937,12 @@
             document.getElementById('event-orig-cal-id').value = '';
             document.getElementById('event-form').reset();
             document.getElementById('event-recurrence').value = '';
+            
+            // Clear weekday checkboxes and hide the group
+            const dayCheckboxes = document.querySelectorAll('.weekday-checkbox input');
+            dayCheckboxes.forEach(cb => cb.checked = false);
+            toggleRecurrenceFields();
+
             document.getElementById('event-delete-btn').style.display = 'none';
             document.getElementById('event-save-btn').style.display = 'block';
 
@@ -1944,16 +2010,32 @@
             document.getElementById('event-location').value = masterEv.location || '';
             document.getElementById('event-desc').value = masterEv.description || '';
 
+            // Clear weekday checkboxes first
+            const dayCheckboxes = document.querySelectorAll('.weekday-checkbox input');
+            dayCheckboxes.forEach(cb => cb.checked = false);
+
             // Recurrence value
             let recurrenceVal = '';
             if (masterEv.recurrence && masterEv.recurrence.length > 0) {
                 const rrule = masterEv.recurrence[0];
-                if (rrule.includes('FREQ=DAILY')) recurrenceVal = 'DAILY';
+                if (rrule.includes('FREQ=WEEKLY') && rrule.includes('BYDAY=')) {
+                    recurrenceVal = 'WEEKLY_BYDAY';
+                    const bydayMatch = rrule.match(/BYDAY=([^;]+)/);
+                    if (bydayMatch && bydayMatch[1]) {
+                        const days = bydayMatch[1].split(',');
+                        dayCheckboxes.forEach(cb => {
+                            if (days.includes(cb.value)) {
+                                cb.checked = true;
+                            }
+                        });
+                    }
+                } else if (rrule.includes('FREQ=DAILY')) recurrenceVal = 'DAILY';
                 else if (rrule.includes('FREQ=WEEKLY')) recurrenceVal = 'WEEKLY';
                 else if (rrule.includes('FREQ=MONTHLY')) recurrenceVal = 'MONTHLY';
                 else if (rrule.includes('FREQ=YEARLY')) recurrenceVal = 'YEARLY';
             }
             document.getElementById('event-recurrence').value = recurrenceVal;
+            toggleRecurrenceFields();
 
             if (masterEv.start.date) {
                 // All day event
@@ -1993,6 +2075,12 @@
                 const el = document.getElementById(id);
                 if (el) el.disabled = disabled;
             });
+
+            // Disable/enable custom weekday checkboxes
+            const dayCheckboxes = document.querySelectorAll('.weekday-checkbox input');
+            dayCheckboxes.forEach(cb => {
+                cb.disabled = disabled;
+            });
         }
 
         function populateCalendarDropdown(currentCalId = null) {
@@ -2017,6 +2105,16 @@
             timeFields.forEach(el => {
                 el.style.visibility = isAllDay ? 'hidden' : 'visible';
             });
+        }
+
+        function toggleRecurrenceFields() {
+            const recurrence = document.getElementById('event-recurrence').value;
+            const bydayGroup = document.getElementById('event-byday-group');
+            if (recurrence === 'WEEKLY_BYDAY') {
+                bydayGroup.style.display = 'block';
+            } else {
+                bydayGroup.style.display = 'none';
+            }
         }
 
         function onStartDateChange() {
@@ -2066,7 +2164,17 @@
             }
 
             const recurrence = document.getElementById('event-recurrence').value;
-            if (recurrence) {
+            if (recurrence === 'WEEKLY_BYDAY') {
+                const checkedDays = [];
+                document.querySelectorAll('.weekday-checkbox input:checked').forEach(cb => {
+                    checkedDays.push(cb.value);
+                });
+                if (checkedDays.length === 0) {
+                    alert('반복할 요일을 최소 하나 이상 선택해 주세요.');
+                    return;
+                }
+                resource.recurrence = [`RRULE:FREQ=WEEKLY;BYDAY=${checkedDays.join(',')}`];
+            } else if (recurrence) {
                 resource.recurrence = [`RRULE:FREQ=${recurrence}`];
             } else {
                 resource.recurrence = null;
