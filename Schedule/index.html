@@ -1198,6 +1198,17 @@
                     </div>
 
                     <div class="form-group">
+                        <label for="event-recurrence">반복</label>
+                        <select id="event-recurrence">
+                            <option value="">반복 안함</option>
+                            <option value="DAILY">매일</option>
+                            <option value="WEEKLY">매주</option>
+                            <option value="MONTHLY">매월</option>
+                            <option value="YEARLY">매년</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
                         <label for="event-location">위치</label>
                         <input type="text" id="event-location" placeholder="위치 추가">
                     </div>
@@ -1227,7 +1238,7 @@
                 <div class="sidebar-logo-area">
                     <span class="logo-icon-sm">📅</span>
                     <span class="sidebar-app-title">My Calendar</span>
-                    <span class="sidebar-version">v1.0.18</span>
+                    <span class="sidebar-version">v1.0.19</span>
                 </div>
                 <div id="auth-user" class="sidebar-auth-user"></div>
                 <div class="sidebar-header-actions">
@@ -1298,6 +1309,7 @@
             '아빠': '#0b8043',          // 초록색 (Basil)
             '가족': '#1a73e8',          // 파란색 (Google Blue)
             '주식': '#8e24aa',          // 보라색 (Grape)
+            '기타': '#78909c',          // 블루 그레이 (Neutral Blue-Grey)
             '대한민국의 휴일': '#ea4335', // 빨간색
             '대한민국 공휴일': '#ea4335'  // 빨간색
         };
@@ -1426,7 +1438,7 @@
 
         // ── Data loading ───────────────────────────────────────────────────
         async function loadCalendars() {
-            const ALLOWED_CALENDARS = ['윤호', '윤서', '엄마', '아빠', '가족', '주식', '대한민국의 휴일', '대한민국 공휴일'];
+            const ALLOWED_CALENDARS = ['윤호', '윤서', '엄마', '아빠', '가족', '주식', '기타', '대한민국의 휴일', '대한민국 공휴일'];
             try {
                 const resp = await gapi.client.calendar.calendarList.list();
                 colorIndex = 0;
@@ -1864,6 +1876,7 @@
             document.getElementById('event-id').value = '';
             document.getElementById('event-orig-cal-id').value = '';
             document.getElementById('event-form').reset();
+            document.getElementById('event-recurrence').value = '';
             document.getElementById('event-delete-btn').style.display = 'none';
             document.getElementById('event-save-btn').style.display = 'block';
 
@@ -1891,14 +1904,30 @@
             document.getElementById('event-modal').style.display = 'flex';
         }
 
-        function openEditEventModal(eventId, calId) {
+        async function openEditEventModal(eventId, calId) {
             const ev = allEvents.find(e => e.id === eventId && e._calId === calId);
             if (!ev) return;
 
             document.getElementById('modal-title-text').textContent = '일정 수정';
-            document.getElementById('event-id').value = eventId;
             document.getElementById('event-orig-cal-id').value = calId;
             document.getElementById('event-form').reset();
+
+            // Check if it's a recurring instance and fetch master event
+            let masterEv = ev;
+            if (ev.recurringEventId) {
+                try {
+                    // Fetch master event to modify the entire series and get recurrence rule
+                    const resp = await gapi.client.calendar.events.get({
+                        calendarId: calId,
+                        eventId: ev.recurringEventId
+                    });
+                    masterEv = resp.result;
+                } catch (err) {
+                    console.warn('Failed to fetch master event, modifying this instance:', err);
+                }
+            }
+
+            document.getElementById('event-id').value = masterEv.id;
 
             // Writable check
             const canEdit = calendars[calId] && calendars[calId].canEdit;
@@ -1911,24 +1940,35 @@
             document.getElementById('event-calendar').disabled = true; // Google API limitations for event moving
 
             // Set values
-            document.getElementById('event-title').value = ev.summary || '';
-            document.getElementById('event-location').value = ev.location || '';
-            document.getElementById('event-desc').value = ev.description || '';
+            document.getElementById('event-title').value = masterEv.summary || '';
+            document.getElementById('event-location').value = masterEv.location || '';
+            document.getElementById('event-desc').value = masterEv.description || '';
 
-            if (ev.start.date) {
+            // Recurrence value
+            let recurrenceVal = '';
+            if (masterEv.recurrence && masterEv.recurrence.length > 0) {
+                const rrule = masterEv.recurrence[0];
+                if (rrule.includes('FREQ=DAILY')) recurrenceVal = 'DAILY';
+                else if (rrule.includes('FREQ=WEEKLY')) recurrenceVal = 'WEEKLY';
+                else if (rrule.includes('FREQ=MONTHLY')) recurrenceVal = 'MONTHLY';
+                else if (rrule.includes('FREQ=YEARLY')) recurrenceVal = 'YEARLY';
+            }
+            document.getElementById('event-recurrence').value = recurrenceVal;
+
+            if (masterEv.start.date) {
                 // All day event
                 document.getElementById('event-allday').checked = true;
-                document.getElementById('event-start-date').value = ev.start.date;
+                document.getElementById('event-start-date').value = masterEv.start.date;
 
                 // Google exclusive end date: subtract 1 day to show end date correctly in Form
-                const endD = new Date(ev.end.date);
+                const endD = new Date(masterEv.end.date);
                 endD.setDate(endD.getDate() - 1);
                 document.getElementById('event-end-date').value = formatDateISO(endD);
             } else {
                 // Timed event
                 document.getElementById('event-allday').checked = false;
-                const start = new Date(ev.start.dateTime);
-                const end = new Date(ev.end.dateTime);
+                const start = new Date(masterEv.start.dateTime);
+                const end = new Date(masterEv.end.dateTime);
 
                 document.getElementById('event-start-date').value = formatDateISO(start);
                 document.getElementById('event-start-time').value = formatTimeISO(start);
@@ -1948,7 +1988,7 @@
         }
 
         function setFormFieldsDisabled(disabled) {
-            const inputs = ['event-title', 'event-start-date', 'event-start-time', 'event-end-date', 'event-end-time', 'event-allday', 'event-location', 'event-desc'];
+            const inputs = ['event-title', 'event-start-date', 'event-start-time', 'event-end-date', 'event-end-time', 'event-allday', 'event-recurrence', 'event-location', 'event-desc'];
             inputs.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.disabled = disabled;
@@ -2023,6 +2063,13 @@
 
                 resource.start = { dateTime: startDateTime.toISOString() };
                 resource.end = { dateTime: endDateTime.toISOString() };
+            }
+
+            const recurrence = document.getElementById('event-recurrence').value;
+            if (recurrence) {
+                resource.recurrence = [`RRULE:FREQ=${recurrence}`];
+            } else {
+                resource.recurrence = null;
             }
 
             try {
