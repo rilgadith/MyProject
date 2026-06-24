@@ -640,10 +640,13 @@
         .ev-section-label {
             font-size: 11px;
             color: #5f6368;
-            font-weight: 500;
+            font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.6px;
-            padding: 10px 20px 4px;
+            padding: 5px 12px;
+            background: #f1f3f4; /* 헤더 배경색 지정 */
+            border-radius: 4px;
+            margin: 10px 12px 6px;
         }
 
         .ev-item {
@@ -660,25 +663,29 @@
         }
 
         .ev-time-col {
-            font-size: 11px;
-            color: #3c4043;
-            font-weight: 500;
-            width: 80px; /* 늘려서 캘린더 이름이 온전히 표시되도록 설정 */
+            width: 48px; /* 한글 2글자 배지 너비에 맞춰 축소 */
             flex-shrink: 0;
-            text-align: left; /* 좌측 정렬로 변경 */
-            padding-top: 3px;
-            line-height: 1.4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ev-badge {
+            display: inline-block;
+            font-size: 9.5px;
+            font-weight: bold;
+            color: white;
+            padding: 2px 4px;
+            border-radius: 4px;
+            text-align: center;
+            width: 100%;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
         .ev-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            flex-shrink: 0;
-            margin-top: 4px;
+            display: none; /* 캘린더 배지 배경색으로 대체되어 원형 점 마크는 숨김 */
         }
 
         .ev-info {
@@ -1166,7 +1173,7 @@
                 <div class="sidebar-logo-area">
                     <span class="logo-icon-sm">📅</span>
                     <span class="sidebar-app-title">My Calendar</span>
-                    <span class="sidebar-version">v1.0.11</span>
+                    <span class="sidebar-version">v1.0.12</span>
                 </div>
                 <div id="auth-user" class="sidebar-auth-user"></div>
                 <div class="sidebar-header-actions">
@@ -1669,11 +1676,13 @@
                     const color = ev._color || '#1a73e8';
                     const cal = calendars[ev._calId];
                     const onClickAttr = isSignedIn ? `onclick="openEditEventModal('${ev.id}', '${ev._calId}')"` : '';
-                    const calName = cal ? cal.summary : '';
+                    let calName = cal ? cal.summary : '';
+                    if (calName === '대한민국의 휴일' || calName === '대한민국 공휴일') {
+                        calName = '휴일';
+                    }
                     const loc = ev.location ? `${ev.location}` : '';
                     html += `<div class="ev-item" style="cursor:pointer" ${onClickAttr}>
-                <div class="ev-time-col" title="${calName}">${calName}</div>
-                <div class="ev-dot" style="background:${color}"></div>
+                <div class="ev-time-col"><span class="ev-badge" style="background:${color}" title="${cal ? cal.summary : ''}">${calName}</span></div>
                 <div class="ev-info">
                     <div class="ev-title">${ev.summary || '(제목 없음)'}</div>
                     ${loc ? `<div class="ev-meta">${loc}</div>` : ''}
@@ -1690,13 +1699,15 @@
                     const start = new Date(ev.start.dateTime);
                     const end = new Date(ev.end.dateTime);
                     const cal = calendars[ev._calId];
-                    const calName = cal ? cal.summary : '';
+                    const onClickAttr = isSignedIn ? `onclick="openEditEventModal('${ev.id}', '${ev._calId}')"` : '';
+                    let calName = cal ? cal.summary : '';
+                    if (calName === '대한민국의 휴일' || calName === '대한민국 공휴일') {
+                        calName = '휴일';
+                    }
                     const loc = ev.location ? ` · ${ev.location}` : '';
                     const meta = `${fmtTime(start)} – ${fmtTime(end)}${loc}`;
-                    const onClickAttr = isSignedIn ? `onclick="openEditEventModal('${ev.id}', '${ev._calId}')"` : '';
                     html += `<div class="ev-item" style="cursor:pointer" ${onClickAttr}>
-                <div class="ev-time-col" title="${calName}">${calName}</div>
-                <div class="ev-dot" style="background:${color}"></div>
+                <div class="ev-time-col"><span class="ev-badge" style="background:${color}" title="${cal ? cal.summary : ''}">${calName}</span></div>
                 <div class="ev-info">
                     <div class="ev-title">${ev.summary || '(제목 없음)'}</div>
                     <div class="ev-meta">${meta}</div>
