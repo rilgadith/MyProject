@@ -1298,7 +1298,7 @@
                 <div class="sidebar-logo-area">
                     <span class="logo-icon-sm">📅</span>
                     <span class="sidebar-app-title">My Calendar</span>
-                    <span class="sidebar-version">v1.0.20</span>
+                    <span class="sidebar-version">v1.0.21</span>
                 </div>
                 <div id="auth-user" class="sidebar-auth-user"></div>
                 <div class="sidebar-header-actions">
@@ -1370,6 +1370,8 @@
             '가족': '#1a73e8',          // 파란색 (Google Blue)
             '주식': '#8e24aa',          // 보라색 (Grape)
             '기타': '#78909c',          // 블루 그레이 (Neutral Blue-Grey)
+            '할 일': '#0097a7',         // 청록색 (Teal)
+            'Tasks': '#0097a7',         // 청록색 (Teal)
             '대한민국의 휴일': '#ea4335', // 빨간색
             '대한민국 공휴일': '#ea4335'  // 빨간색
         };
@@ -1498,7 +1500,7 @@
 
         // ── Data loading ───────────────────────────────────────────────────
         async function loadCalendars() {
-            const ALLOWED_CALENDARS = ['윤호', '윤서', '엄마', '아빠', '가족', '주식', '기타', '대한민국의 휴일', '대한민국 공휴일'];
+            const ALLOWED_CALENDARS = ['윤호', '윤서', '엄마', '아빠', '가족', '주식', '기타', '할 일', 'Tasks', '대한민국의 휴일', '대한민국 공휴일'];
             try {
                 const resp = await gapi.client.calendar.calendarList.list();
                 colorIndex = 0;
