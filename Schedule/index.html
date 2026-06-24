@@ -1227,7 +1227,7 @@
                 <div class="sidebar-logo-area">
                     <span class="logo-icon-sm">📅</span>
                     <span class="sidebar-app-title">My Calendar</span>
-                    <span class="sidebar-version">v1.0.15</span>
+                    <span class="sidebar-version">v1.0.16</span>
                 </div>
                 <div id="auth-user" class="sidebar-auth-user"></div>
                 <div class="sidebar-header-actions">
@@ -1679,13 +1679,13 @@
                 shown.forEach(ev => {
                     const color = ev._color || '#1a73e8';
                     const title = ev.summary || '(제목 없음)';
-                    const onClickAttr = isSignedIn ? `onclick="event.stopPropagation(); openEditEventModal('${ev.id}', '${ev._calId}')"` : '';
+                    // 일정 칩을 클릭했을 때도 수정 창을 띄우지 않고 부모 셀의 selectDate가 전파되도록 onclick 이벤트를 제거합니다.
                     if (ev.start.date) {
-                        evHtml += `<div class="cal-chip" style="background:${color};cursor:pointer" title="${title}" ${onClickAttr}>${title}</div>`;
+                        evHtml += `<div class="cal-chip" style="background:${color};cursor:pointer" title="${title}">${title}</div>`;
                     } else {
                         const t = fmtTime(new Date(ev.start.dateTime));
                         // 점 마크의 inline span의 left 위치를 스타일 규칙에 맞게 left:2px로 유지하고, 텍스트 시작부인 시간(t)과 제목(title) 사이의 공백(&nbsp;)을 확보
-                        evHtml += `<div class="cal-chip timed" style="--dot:${color};cursor:pointer" title="${title}" ${onClickAttr}>
+                        evHtml += `<div class="cal-chip timed" style="--dot:${color};cursor:pointer" title="${title}">
                     <span style="position:absolute;left:2.5px;top:50%;transform:translateY(-50%);width:4px;height:4px;border-radius:50%;background:${color};"></span>
                     ${t}&nbsp; ${title}</div>`;
                     }
