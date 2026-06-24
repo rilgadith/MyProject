@@ -35,7 +35,8 @@
             min-height: 650px; /* Prevent UI crushing on small screens */
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            overflow-x: hidden; /* Prevent horizontal scroll */
+            overflow-y: hidden;
         }
 
         /* ── Header ─────────────────────────────────────── */
@@ -961,6 +962,7 @@
                 height: auto;
                 min-height: auto;
                 overflow-y: auto;
+                overflow-x: hidden;
             }
 
             .main-layout {
@@ -1000,6 +1002,7 @@
                 height: auto;
                 min-height: 650px;
                 overflow-y: auto;
+                overflow-x: hidden;
             }
         }
 
@@ -1022,7 +1025,7 @@
         <div class="header-logo">
             <div class="logo-icon">📅</div>
         </div>
-        <h1>My Calendar <span style="font-size: 11px; color: #5f6368; font-weight: normal; margin-left: 4px; vertical-align: middle;">v1.0.2</span></h1>
+        <h1>My Calendar <span style="font-size: 11px; color: #5f6368; font-weight: normal; margin-left: 4px; vertical-align: middle;">v1.0.3</span></h1>
         <span id="auth-user"></span>
         <div class="header-right">
             <button id="refresh-btn" onclick="onRefresh()" title="새로고침">↻</button>
