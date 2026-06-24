@@ -1,0 +1,1899 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Calendar</title>
+    <!--
+    ================================================================
+    Google Calendar 연동 설정 방법
+    ================================================================
+    1. https://console.cloud.google.com/ 접속
+    2. 새 프로젝트 생성 (예: "My Calendar")
+    3. [API 및 서비스] → [라이브러리] → "Google Calendar API" 검색 → 사용 설정
+    4. [API 및 서비스] → [사용자 인증 정보] → [사용자 인증 정보 만들기] → [OAuth 클라이언트 ID]
+    5. 애플리케이션 유형: "웹 애플리케이션" 선택
+    6. 승인된 JavaScript 원본에 추가:
+       - 로컬 테스트용:  http://localhost (또는 사용하는 포트)
+       - GitHub Pages:  https://[your-username].github.io
+    7. 생성된 클라이언트 ID를 아래 CONFIG.CLIENT_ID에 입력
+    ================================================================
+    -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', -apple-system, sans-serif;
+            background: #f8f9fa;
+            color: #3c4043;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* ── Header ─────────────────────────────────────── */
+        .header {
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            gap: 12px;
+            height: 60px;
+            flex-shrink: 0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            z-index: 10;
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: #1a73e8;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+
+        .header h1 {
+            font-size: 18px;
+            font-weight: 500;
+            color: #3c4043;
+        }
+
+        #auth-user {
+            font-size: 13px;
+            color: #5f6368;
+            margin-left: 8px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: auto;
+        }
+
+        #refresh-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 50%;
+            color: #5f6368;
+            font-size: 18px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+        }
+
+        #refresh-btn:hover {
+            background: #f1f3f4;
+        }
+
+        #refresh-btn.spinning {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        #auth-btn {
+            padding: 8px 18px;
+            background: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.15s;
+        }
+
+        #auth-btn:hover {
+            background: #1557b0;
+        }
+
+        #auth-btn.signout {
+            background: white;
+            color: #5f6368;
+            border: 1px solid #dadce0;
+        }
+
+        #auth-btn.signout:hover {
+            background: #f1f3f4;
+        }
+
+        /* ── Main layout ─────────────────────────────────── */
+        .main-layout {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* ── Left sidebar ─────────────────────────────────── */
+        .sidebar-left {
+            width: 216px;
+            padding: 16px 12px;
+            background: white;
+            border-right: 1px solid #e0e0e0;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        /* ── Mini calendar ───────────────────────────────── */
+        .mini-cal-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 0 2px;
+        }
+
+        .mini-cal-title {
+            font-size: 13px;
+            font-weight: 500;
+            color: #3c4043;
+        }
+
+        .mini-nav-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #5f6368;
+            font-size: 18px;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        .mini-nav-btn:hover {
+            background: #f1f3f4;
+        }
+
+        .mini-cal-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+        }
+
+        .mini-day-hd {
+            font-size: 11px;
+            text-align: center;
+            color: #5f6368;
+            padding: 3px 0 5px;
+            font-weight: 500;
+        }
+
+        .mini-day {
+            font-size: 12px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 50%;
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #3c4043;
+            margin: 1px;
+        }
+
+        .mini-day:hover {
+            background: #f1f3f4;
+        }
+
+        .mini-day.today {
+            background: #1a73e8;
+            color: white;
+            font-weight: 600;
+        }
+
+        .mini-day.selected:not(.today) {
+            background: #e8f0fe;
+            color: #1a73e8;
+            font-weight: 600;
+        }
+
+        .mini-day.other-month {
+            color: #bdc1c6;
+        }
+
+        .mini-day.sun {
+            color: #c62828;
+        }
+
+        .mini-day.sun.today {
+            color: white;
+        }
+
+        .mini-day.sat {
+            color: #1565c0;
+        }
+
+        .mini-day.sat.today {
+            color: white;
+        }
+
+        .mini-day.other-month.sun,
+        .mini-day.other-month.sat {
+            color: #d7d9db;
+        }
+
+        /* ── Calendars list ──────────────────────────────── */
+        .calendars-list-container {
+            margin-top: 24px;
+            border-top: 1px solid #e0e0e0;
+            padding-top: 16px;
+        }
+
+        .cal-list-title {
+            font-size: 13px;
+            font-weight: 500;
+            color: #3c4043;
+            margin-bottom: 12px;
+            padding: 0 4px;
+        }
+
+        .cal-list-item {
+            display: flex;
+            align-items: center;
+            padding: 6px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            gap: 10px;
+            transition: background 0.15s;
+            margin-bottom: 2px;
+        }
+
+        .cal-list-item:hover {
+            background: #f1f3f4;
+        }
+
+        /* Custom Checkbox */
+        .cal-checkbox-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+            pointer-events: none;
+            /* Prevent double click triggers */
+        }
+
+        .cal-checkbox-input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            height: 0;
+            width: 0;
+        }
+
+        .cal-checkbox-custom {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--cal-color);
+            border-radius: 3px;
+            background-color: transparent;
+            transition: background-color 0.15s, border-color 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cal-checkbox-input:checked~.cal-checkbox-custom {
+            background-color: var(--cal-color);
+        }
+
+        .cal-checkbox-custom::after {
+            content: "";
+            display: none;
+            width: 4px;
+            height: 8px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg) translate(0px, -1px);
+        }
+
+        .cal-checkbox-input:checked~.cal-checkbox-custom::after {
+            display: block;
+        }
+
+        .cal-list-name {
+            font-size: 12px;
+            color: #3c4043;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            user-select: none;
+            flex: 1;
+        }
+
+        /* ── Center calendar ─────────────────────────────── */
+        .main-calendar {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: white;
+        }
+
+        .main-cal-topbar {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .today-btn {
+            padding: 7px 14px;
+            background: white;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #3c4043;
+            font-weight: 500;
+        }
+
+        .today-btn:hover {
+            background: #f8f9fa;
+        }
+
+        .main-nav-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #5f6368;
+            font-size: 22px;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .main-nav-btn:hover {
+            background: #f1f3f4;
+        }
+
+        .main-cal-title {
+            font-size: 20px;
+            font-weight: 400;
+            color: #3c4043;
+        }
+
+        /* ── Calendar grid ───────────────────────────────── */
+        .cal-day-headers {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            border-bottom: 1px solid #e0e0e0;
+            flex-shrink: 0;
+        }
+
+        .cal-day-hd {
+            padding: 6px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 500;
+            color: #5f6368;
+        }
+
+        .cal-day-hd.sun {
+            color: #c62828;
+        }
+
+        .cal-day-hd.sat {
+            color: #1565c0;
+        }
+
+        .cal-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .cal-cell {
+            border-right: 1px solid #e0e0e0;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 4px 4px 2px;
+            cursor: pointer;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            transition: background 0.1s;
+        }
+
+        .cal-cell:nth-child(7n) {
+            border-right: none;
+        }
+
+        .cal-cell:hover {
+            background: #f8f9fa;
+        }
+
+        .cal-cell.other-month {
+            background: #fafafa;
+        }
+
+        .cal-cell.selected {
+            background: #e8f0fe !important;
+        }
+
+        .cal-date-wrap {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 2px;
+            flex-shrink: 0;
+        }
+
+        .cal-date {
+            width: 26px;
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 13px;
+        }
+
+        .cal-cell.today .cal-date {
+            background: #1a73e8;
+            color: white;
+            font-weight: 600;
+        }
+
+        .cal-cell.other-month .cal-date {
+            color: #bdc1c6;
+        }
+
+        .cal-cell.sun .cal-date {
+            color: #c62828;
+        }
+
+        .cal-cell.sat .cal-date {
+            color: #1565c0;
+        }
+
+        .cal-cell.today .cal-date {
+            color: white !important;
+        }
+
+        .cal-events-wrap {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+
+        .cal-chip {
+            font-size: 11px;
+            padding: 1px 5px;
+            border-radius: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: white;
+            flex-shrink: 0;
+            line-height: 1.6;
+        }
+
+        .cal-chip.timed {
+            background: transparent;
+            color: #3c4043;
+            padding-left: 8px;
+            position: relative;
+        }
+
+        .cal-chip.timed::before {
+            content: '';
+            position: absolute;
+            left: 2px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+        }
+
+        .cal-more {
+            font-size: 11px;
+            color: #5f6368;
+            padding: 0 4px;
+            line-height: 1.6;
+        }
+
+        /* ── Right sidebar ────────────────────────────────── */
+        .sidebar-right {
+            width: 320px;
+            border-left: 1px solid #e0e0e0;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .ev-list-header {
+            padding: 16px 20px 12px;
+            border-bottom: 1px solid #e0e0e0;
+            flex-shrink: 0;
+        }
+
+        .ev-list-dow {
+            font-size: 12px;
+            color: #5f6368;
+            margin-bottom: 2px;
+        }
+
+        .ev-list-day-num {
+            font-size: 28px;
+            font-weight: 300;
+            color: #3c4043;
+            line-height: 1.1;
+        }
+
+        .ev-list-day-num.is-today {
+            color: #1a73e8;
+        }
+
+        .ev-list-body {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .ev-section-label {
+            font-size: 11px;
+            color: #5f6368;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            padding: 10px 20px 4px;
+        }
+
+        .ev-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 6px 20px;
+            gap: 10px;
+            cursor: default;
+            border-radius: 0;
+        }
+
+        .ev-item:hover {
+            background: #f8f9fa;
+        }
+
+        .ev-time-col {
+            font-size: 11px;
+            color: #5f6368;
+            width: 52px;
+            flex-shrink: 0;
+            text-align: right;
+            padding-top: 3px;
+            line-height: 1.4;
+        }
+
+        .ev-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-top: 4px;
+        }
+
+        .ev-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .ev-title {
+            font-size: 13px;
+            color: #3c4043;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .ev-meta {
+            font-size: 11px;
+            color: #5f6368;
+            margin-top: 1px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .ev-empty {
+            padding: 40px 20px;
+            text-align: center;
+            color: #5f6368;
+            font-size: 13px;
+        }
+
+        .ev-loading {
+            padding: 40px 20px;
+            text-align: center;
+            color: #9aa0a6;
+            font-size: 13px;
+        }
+
+        /* ── Auth overlay ─────────────────────────────────── */
+        .auth-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            backdrop-filter: blur(2px);
+        }
+
+        .auth-card {
+            background: white;
+            border-radius: 12px;
+            padding: 44px 48px;
+            width: 380px;
+            text-align: center;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .auth-card-logo {
+            width: 56px;
+            height: 56px;
+            background: #1a73e8;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 28px;
+        }
+
+        .auth-card h2 {
+            font-size: 20px;
+            font-weight: 500;
+            color: #3c4043;
+            margin-bottom: 8px;
+        }
+
+        .auth-card p {
+            font-size: 13px;
+            color: #5f6368;
+            margin-bottom: 28px;
+            line-height: 1.6;
+        }
+
+        .google-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: white;
+            border: 1px solid #dadce0;
+            padding: 11px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #3c4043;
+            margin: 0 auto;
+            transition: box-shadow 0.15s, background 0.15s;
+        }
+
+        .google-btn:hover {
+            background: #f8f9fa;
+            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.12);
+        }
+
+        /* ── Event Modal ─────────────────────────────────── */
+        .event-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 300;
+            backdrop-filter: blur(4px);
+        }
+
+        .event-modal-card {
+            background: white;
+            border-radius: 12px;
+            width: 440px;
+            max-width: 90%;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: modalFadeIn 0.2s cubic-bezier(0, 0, 0.2, 1);
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .event-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .event-modal-header h3 {
+            font-size: 16px;
+            font-weight: 500;
+            color: #3c4043;
+        }
+
+        .modal-close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #5f6368;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close-btn:hover {
+            background: #f1f3f4;
+            color: #3c4043;
+        }
+
+        .event-modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            max-height: 75vh;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        .form-group label {
+            font-size: 11px;
+            font-weight: 500;
+            color: #5f6368;
+            text-transform: uppercase;
+        }
+
+        .form-group input[type="text"],
+        .form-group select,
+        .form-group textarea,
+        .form-group input[type="date"],
+        .form-group input[type="time"] {
+            padding: 8px 12px;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #3c4043;
+            outline: none;
+            width: 100%;
+            transition: border-color 0.15s;
+        }
+
+        .form-group input[type="text"]:focus,
+        .form-group select:focus,
+        .form-group textarea:focus,
+        .form-group input[type="date"]:focus,
+        .form-group input[type="time"]:focus {
+            border-color: #1a73e8;
+        }
+
+        .form-group.checkbox-group {
+            flex-direction: row;
+            align-items: center;
+            gap: 8px;
+            margin: 8px 0 16px;
+        }
+
+        .form-group.checkbox-group input {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .form-group.checkbox-group label {
+            font-size: 13px;
+            color: #3c4043;
+            text-transform: none;
+            cursor: pointer;
+            font-weight: normal;
+        }
+
+        .event-modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 24px;
+            border-top: 1px solid #e0e0e0;
+            padding-top: 16px;
+        }
+
+        .btn {
+            padding: 8px 18px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: background 0.15s;
+        }
+
+        .btn-primary {
+            background: #1a73e8;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1557b0;
+        }
+
+        .btn-danger {
+            background: #ea4335;
+            color: white;
+            margin-right: auto;
+            /* Push delete button to the left */
+        }
+
+        .btn-danger:hover {
+            background: #c5221f;
+        }
+
+        .config-warn {
+            margin-top: 16px;
+            font-size: 12px;
+            color: #ea4335;
+            background: #fce8e6;
+            padding: 10px 14px;
+            border-radius: 6px;
+            text-align: left;
+            line-height: 1.5;
+        }
+
+        /* ── Scrollbar ────────────────────────────────────── */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #dadce0;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #bdc1c6;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Header -->
+    <div class="header">
+        <div class="header-logo">
+            <div class="logo-icon">📅</div>
+        </div>
+        <h1>My Calendar</h1>
+        <span id="auth-user"></span>
+        <div class="header-right">
+            <button id="refresh-btn" onclick="onRefresh()" title="새로고침">↻</button>
+            <button id="auth-btn" onclick="handleAuthClick()">Google 로그인</button>
+        </div>
+    </div>
+
+    <!-- Auth overlay -->
+    <div class="auth-overlay" id="auth-overlay">
+        <div class="auth-card">
+            <div class="auth-card-logo">📅</div>
+            <h2>My Calendar</h2>
+            <p>Google 계정으로 로그인하여<br>캘린더 일정을 확인하세요</p>
+            <button class="google-btn" onclick="handleAuthClick()">
+                <svg width="18" height="18" viewBox="0 0 18 18">
+                    <path fill="#4285F4"
+                        d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" />
+                    <path fill="#34A853"
+                        d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" />
+                    <path fill="#FBBC05"
+                        d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" />
+                    <path fill="#EA4335"
+                        d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" />
+                </svg>
+                Google로 계속하기
+            </button>
+            <div id="config-warn" class="config-warn" style="display:none">
+                ⚠️ <strong>CLIENT_ID 미설정</strong><br>
+                파일 상단 CONFIG 섹션에 Google Cloud Console에서 발급받은 CLIENT_ID를 입력하세요.
+            </div>
+        </div>
+    </div>
+
+    <!-- Event Modal -->
+    <div class="event-modal-overlay" id="event-modal" style="display:none">
+        <div class="event-modal-card">
+            <div class="event-modal-header">
+                <h3 id="modal-title-text">일정 추가</h3>
+                <button class="modal-close-btn" onclick="closeEventModal()">×</button>
+            </div>
+            <div class="event-modal-body">
+                <form id="event-form" onsubmit="onSaveEvent(event)">
+                    <input type="hidden" id="event-id">
+                    <input type="hidden" id="event-orig-cal-id">
+
+                    <div class="form-group">
+                        <label for="event-title">제목</label>
+                        <input type="text" id="event-title" placeholder="제목 추가" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="event-calendar">캘린더</label>
+                        <select id="event-calendar" required></select>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="event-start-date">시작일</label>
+                            <input type="date" id="event-start-date" required onchange="onStartDateChange()">
+                        </div>
+                        <div class="form-group event-time-field" id="event-start-time-group">
+                            <label for="event-start-time">시작시간</label>
+                            <input type="time" id="event-start-time">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="event-end-date">종료일</label>
+                            <input type="date" id="event-end-date" required>
+                        </div>
+                        <div class="form-group event-time-field" id="event-end-time-group">
+                            <label for="event-end-time">종료시간</label>
+                            <input type="time" id="event-end-time">
+                        </div>
+                    </div>
+
+                    <div class="form-group checkbox-group">
+                        <input type="checkbox" id="event-allday" onchange="toggleAllDayFields()">
+                        <label for="event-allday">종일 일정</label>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="event-location">위치</label>
+                        <input type="text" id="event-location" placeholder="위치 추가">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="event-desc">설명</label>
+                        <textarea id="event-desc" rows="3" placeholder="설명 추가"></textarea>
+                    </div>
+
+                    <div class="event-modal-footer">
+                        <button type="button" class="btn btn-danger" id="event-delete-btn" onclick="onDeleteEvent()"
+                            style="display:none">삭제</button>
+                        <button type="submit" class="btn btn-primary" id="event-save-btn">저장</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main layout -->
+    <div class="main-layout">
+
+        <!-- Left: mini calendar -->
+        <div class="sidebar-left">
+            <div id="mini-calendar"></div>
+            <div id="calendars-list-container" class="calendars-list-container"></div>
+        </div>
+
+        <!-- Center: main calendar -->
+        <div class="main-calendar">
+            <div class="main-cal-topbar">
+                <button class="today-btn" onclick="goToToday()">오늘</button>
+                <button class="main-nav-btn" onclick="navigateMonth(-1)">&#8249;</button>
+                <button class="main-nav-btn" onclick="navigateMonth(1)">&#8250;</button>
+                <span class="main-cal-title" id="main-cal-title"></span>
+            </div>
+            <div class="cal-day-headers" id="cal-day-headers"></div>
+            <div class="cal-grid" id="cal-grid" style="flex:1;overflow:hidden;"></div>
+        </div>
+
+        <!-- Right: event list -->
+        <div class="sidebar-right">
+            <div class="ev-list-header" id="ev-list-header"></div>
+            <div class="ev-list-body" id="ev-list-body">
+                <div class="ev-loading">로그인 후 일정을 불러옵니다</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ================================================================
+     CONFIG — 여기에 Client ID를 입력하세요
+     ================================================================ -->
+    <script>
+        const CONFIG = {
+            // Google Cloud Console → API 및 서비스 → 사용자 인증 정보 → OAuth 2.0 클라이언트 ID
+            CLIENT_ID: '678232319527-4eovfst68dd7v6938a65abp45sp6l3l5.apps.googleusercontent.com',
+            SCOPES: 'https://www.googleapis.com/auth/calendar',
+        };
+    </script>
+    <!-- ================================================================ -->
+
+    <script>
+        // ── Constants ──────────────────────────────────────────────────────
+        const KO_MONTHS = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
+        const KO_DAYS_S = ['일', '월', '화', '수', '목', '금', '토'];
+        const KO_DAYS_F = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+        const DOW_CLASS = ['sun', '', '', '', '', '', 'sat'];
+
+        const DEFAULT_COLORS = [
+            '#1a73e8', '#0b8043', '#e67c73', '#f4511e',
+            '#f6bf26', '#039be5', '#7986cb', '#8e24aa',
+            '#33b679', '#d50000', '#616161', '#3f51b5',
+        ];
+
+        // ── State ──────────────────────────────────────────────────────────
+        const todayRaw = new Date();
+        todayRaw.setHours(0, 0, 0, 0);
+        const TODAY = new Date(todayRaw);
+
+        let viewDate = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1);
+        let selectedDate = new Date(TODAY);
+        let isSignedIn = false;
+        let tokenClient = null;
+        let gapiInited = false;
+        let gisInited = false;
+        let allEvents = [];
+        let calendars = {};    // { id: { summary, color } }
+        let colorIndex = 0;
+
+        // ── Google API init ────────────────────────────────────────────────
+        function gapiLoaded() {
+            gapi.load('client', async () => {
+                await gapi.client.init({
+                    discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'],
+                });
+                gapiInited = true;
+                checkBothReady();
+            });
+        }
+
+        function gisLoaded() {
+            const id = CONFIG.CLIENT_ID;
+            if (!id || id.startsWith('YOUR_CLIENT_ID')) {
+                document.getElementById('config-warn').style.display = 'block';
+                return;
+            }
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: id,
+                scope: CONFIG.SCOPES,
+                callback: handleTokenResponse,
+            });
+            gisInited = true;
+            checkBothReady();
+        }
+
+        function checkBothReady() {
+            if (!gapiInited || !gisInited) return;
+            const saved = sessionStorage.getItem('cal_token');
+            if (saved) {
+                try {
+                    gapi.client.setToken(JSON.parse(saved));
+                    onSignedIn();
+                } catch (e) {
+                    sessionStorage.removeItem('cal_token');
+                }
+            }
+        }
+
+        function handleTokenResponse(resp) {
+            if (resp.error) { console.error('Auth error:', resp); return; }
+            sessionStorage.setItem('cal_token', JSON.stringify(gapi.client.getToken()));
+            onSignedIn();
+        }
+
+        function handleAuthClick() {
+            const id = CONFIG.CLIENT_ID;
+            if (!id || id.startsWith('YOUR_CLIENT_ID')) {
+                document.getElementById('config-warn').style.display = 'block';
+                return;
+            }
+            if (isSignedIn) {
+                const token = gapi.client.getToken();
+                if (token) {
+                    google.accounts.oauth2.revoke(token.access_token, () => { });
+                }
+                gapi.client.setToken(null);
+                sessionStorage.removeItem('cal_token');
+                onSignedOut();
+            } else {
+                if (!gisInited) { alert('Google API 로딩 중입니다. 잠시 후 다시 시도해주세요.'); return; }
+                tokenClient.requestAccessToken({ prompt: '' });
+            }
+        }
+
+        function onRefresh() {
+            if (!isSignedIn) return;
+            const btn = document.getElementById('refresh-btn');
+            btn.classList.add('spinning');
+            fetchEvents().finally(() => btn.classList.remove('spinning'));
+        }
+
+        async function onSignedIn() {
+            isSignedIn = true;
+            document.getElementById('auth-overlay').style.display = 'none';
+            document.getElementById('auth-btn').textContent = '로그아웃';
+            document.getElementById('auth-btn').className = 'signout';
+            document.getElementById('refresh-btn').style.display = 'flex';
+
+            await loadCalendars();
+            await fetchEvents();
+
+            // Show user email if available
+            try {
+                const profile = await gapi.client.request({ path: 'https://www.googleapis.com/oauth2/v1/userinfo' });
+                document.getElementById('auth-user').textContent = profile.result.email || '';
+            } catch (e) { }
+        }
+
+        function onSignedOut() {
+            isSignedIn = false;
+            allEvents = [];
+            calendars = {};
+            sessionStorage.removeItem('cal_token');
+            document.getElementById('auth-overlay').style.display = 'flex';
+            document.getElementById('auth-btn').textContent = 'Google 로그인';
+            document.getElementById('auth-btn').className = '';
+            document.getElementById('auth-user').textContent = '';
+            document.getElementById('refresh-btn').style.display = 'none';
+            const container = document.getElementById('calendars-list-container');
+            if (container) container.innerHTML = '';
+            renderMainCalendar();
+            renderEventList();
+        }
+
+        // ── Data loading ───────────────────────────────────────────────────
+        async function loadCalendars() {
+            try {
+                const resp = await gapi.client.calendar.calendarList.list();
+                colorIndex = 0;
+                calendars = {};
+                (resp.result.items || []).forEach(cal => {
+                    const c = cal.backgroundColor || DEFAULT_COLORS[colorIndex++ % DEFAULT_COLORS.length];
+                    calendars[cal.id] = {
+                        summary: cal.summary,
+                        color: c,
+                        visible: true,
+                        canEdit: cal.accessRole === 'owner' || cal.accessRole === 'writer'
+                    };
+                });
+                renderCalendarsList();
+            } catch (e) {
+                console.warn('calendarList failed:', e);
+                const errMsg = e.result?.error?.message || e.message || JSON.stringify(e);
+
+                // Insufficient scopes detection -> clear token and logout
+                if (e.status === 403 || errMsg.includes('insufficient') || errMsg.includes('Scope')) {
+                    sessionStorage.removeItem('cal_token');
+                    gapi.client.setToken(null);
+                    onSignedOut();
+                    alert('보안 권한(Scope)이 변경되어 다시 로그인이 필요합니다. 구글 동의창에서 권한을 허용해 주세요.');
+                    return;
+                }
+
+                const container = document.getElementById('calendars-list-container');
+                if (container) {
+                    container.innerHTML = `
+                <div class="config-warn" style="margin-top:10px; font-size:11px; display:block;">
+                    ⚠️ <strong>캘린더 목록 로드 실패</strong><br>
+                    <span style="color:#d93025;">상세 에러: ${errMsg}</span><br><br>
+                    1. 구글 클라우드 콘솔에서 <strong>Google Calendar API</strong>가 활성화 상태인지 확인해 주세요.<br>
+                    2. 로그인 시 <strong>캘린더 권한 체크박스</strong>를 체크했는지 확인해 주세요.
+                </div>
+            `;
+                }
+            }
+        }
+
+        async function fetchEvents() {
+            if (!isSignedIn) return;
+
+            // Fetch range: prev month start → next month end
+            const rangeStart = new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1);
+            const rangeEnd = new Date(viewDate.getFullYear(), viewDate.getMonth() + 2, 0, 23, 59, 59);
+
+            let ids = Object.keys(calendars);
+            if (ids.length === 0) ids = ['primary'];
+
+            try {
+                const results = await Promise.all(ids.map(id =>
+                    gapi.client.calendar.events.list({
+                        calendarId: id,
+                        timeMin: rangeStart.toISOString(),
+                        timeMax: rangeEnd.toISOString(),
+                        singleEvents: true,
+                        orderBy: 'startTime',
+                        maxResults: 2500,
+                    }).then(r => {
+                        return (r.result.items || []).map(ev => ({
+                            ...ev,
+                            _calId: id,
+                            _color: (calendars[id] && calendars[id].color) || '#1a73e8',
+                        }));
+                    }).catch(() => [])
+                ));
+                allEvents = results.flat();
+            } catch (e) {
+                if (e.status === 401) {
+                    // Token expired
+                    sessionStorage.removeItem('cal_token');
+                    tokenClient && tokenClient.requestAccessToken({ prompt: '' });
+                    return;
+                }
+                console.error('fetchEvents error:', e);
+            }
+            renderMainCalendar();
+            renderEventList();
+        }
+
+        // ── Date utilities ─────────────────────────────────────────────────
+        function gridStart(d) {
+            const s = new Date(d.getFullYear(), d.getMonth(), 1);
+            s.setDate(s.getDate() - s.getDay());
+            return s;
+        }
+
+        function gridEnd(d) {
+            const last = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+            const e = new Date(last);
+            e.setDate(e.getDate() + (6 - last.getDay()));
+            e.setHours(23, 59, 59, 999);
+            return e;
+        }
+
+        function sameDay(a, b) {
+            return a.getFullYear() === b.getFullYear()
+                && a.getMonth() === b.getMonth()
+                && a.getDate() === b.getDate();
+        }
+
+        function eventsForDate(date) {
+            const ds = new Date(date); ds.setHours(0, 0, 0, 0);
+            const de = new Date(date); de.setHours(23, 59, 59, 999);
+
+            return allEvents.filter(ev => {
+                if (calendars[ev._calId] && !calendars[ev._calId].visible) {
+                    return false;
+                }
+                let s, e;
+                if (ev.start.date) {
+                    s = parseDateOnly(ev.start.date);
+                    e = parseDateOnly(ev.end.date);
+                    e.setDate(e.getDate() - 1); // exclusive end
+                } else {
+                    s = new Date(ev.start.dateTime);
+                    e = new Date(ev.end.dateTime);
+                }
+                return s <= de && e >= ds;
+            }).sort((a, b) => {
+                const aAD = !!a.start.date, bAD = !!b.start.date;
+                if (aAD !== bAD) return aAD ? -1 : 1;
+                const at = a.start.dateTime ? new Date(a.start.dateTime) : parseDateOnly(a.start.date);
+                const bt = b.start.dateTime ? new Date(b.start.dateTime) : parseDateOnly(b.start.date);
+                return at - bt;
+            });
+        }
+
+        function parseDateOnly(str) {
+            // Parse YYYY-MM-DD as local time (not UTC)
+            const [y, m, d] = str.split('-').map(Number);
+            return new Date(y, m - 1, d);
+        }
+
+        function fmtTime(dt) {
+            const h = dt.getHours(), m = dt.getMinutes();
+            const ap = h < 12 ? '오전' : '오후';
+            return `${ap} ${h % 12 || 12}:${String(m).padStart(2, '0')}`;
+        }
+
+        // ── Render: Mini calendar ──────────────────────────────────────────
+        function renderMiniCalendar() {
+            const y = viewDate.getFullYear(), mo = viewDate.getMonth();
+            const first = new Date(y, mo, 1);
+            const last = new Date(y, mo + 1, 0);
+            const startDow = first.getDay();
+
+            let html = `
+        <div class="mini-cal-nav">
+            <button class="mini-nav-btn" onclick="navigateMonth(-1)">&#8249;</button>
+            <span class="mini-cal-title">${y}년 ${KO_MONTHS[mo]}</span>
+            <button class="mini-nav-btn" onclick="navigateMonth(1)">&#8250;</button>
+        </div>
+        <div class="mini-cal-grid">
+    `;
+
+            KO_DAYS_S.forEach((d, i) => {
+                const cls = i === 0 ? ' sun' : i === 6 ? ' sat' : '';
+                html += `<div class="mini-day-hd${cls}">${d}</div>`;
+            });
+
+            // Prev month padding
+            for (let i = 0; i < startDow; i++) {
+                const pd = new Date(y, mo, i - startDow + 1);
+                html += miniDayEl(pd, true);
+            }
+            // Current month
+            for (let d = 1; d <= last.getDate(); d++) {
+                html += miniDayEl(new Date(y, mo, d), false);
+            }
+            // Next month padding
+            const endDow = last.getDay();
+            for (let i = 1; i <= 6 - endDow; i++) {
+                html += miniDayEl(new Date(y, mo + 1, i), true);
+            }
+
+            html += '</div>';
+            document.getElementById('mini-calendar').innerHTML = html;
+        }
+
+        function miniDayEl(date, otherMonth) {
+            const dow = date.getDay();
+            let cls = 'mini-day';
+            if (otherMonth) cls += ' other-month';
+            else if (dow === 0) cls += ' sun';
+            else if (dow === 6) cls += ' sat';
+
+            if (sameDay(date, TODAY)) cls += ' today';
+            else if (sameDay(date, selectedDate)) cls += ' selected';
+
+            const y = date.getFullYear(), m = date.getMonth(), d = date.getDate();
+            return `<div class="${cls}" onclick="selectDate(${y},${m},${d})">${d}</div>`;
+        }
+
+        // ── Render: Main calendar ──────────────────────────────────────────
+        function renderMainCalendar() {
+            const y = viewDate.getFullYear(), mo = viewDate.getMonth();
+            document.getElementById('main-cal-title').textContent = `${y}년 ${KO_MONTHS[mo]}`;
+
+            // Day headers
+            document.getElementById('cal-day-headers').innerHTML =
+                KO_DAYS_S.map((d, i) => {
+                    const cls = i === 0 ? ' sun' : i === 6 ? ' sat' : '';
+                    return `<div class="cal-day-hd${cls}">${d}</div>`;
+                }).join('');
+
+            // Grid cells
+            const gs = gridStart(viewDate);
+            const ge = gridEnd(viewDate);
+            const cells = [];
+            const cur = new Date(gs);
+            while (cur <= ge) { cells.push(new Date(cur)); cur.setDate(cur.getDate() + 1); }
+
+            // Determine row count for grid-template-rows
+            const rows = cells.length / 7;
+            const gridEl = document.getElementById('cal-grid');
+            gridEl.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+
+            let html = '';
+            cells.forEach(date => {
+                const isCurrentMo = date.getMonth() === mo;
+                const dow = date.getDay();
+                let cls = 'cal-cell';
+                if (!isCurrentMo) cls += ' other-month';
+                if (sameDay(date, TODAY)) cls += ' today';
+                if (sameDay(date, selectedDate)) cls += ' selected';
+                if (!isCurrentMo) { } // already marked
+                else if (dow === 0) cls += ' sun';
+                else if (dow === 6) cls += ' sat';
+
+                const evs = eventsForDate(date);
+                const MAX = 3;
+                const shown = evs.slice(0, MAX);
+                const more = evs.length - MAX;
+
+                let evHtml = '';
+                shown.forEach(ev => {
+                    const color = ev._color || '#1a73e8';
+                    const title = ev.summary || '(제목 없음)';
+                    const onClickAttr = isSignedIn ? `onclick="event.stopPropagation(); openEditEventModal('${ev.id}', '${ev._calId}')"` : '';
+                    if (ev.start.date) {
+                        evHtml += `<div class="cal-chip" style="background:${color};cursor:pointer" title="${title}" ${onClickAttr}>${title}</div>`;
+                    } else {
+                        const t = fmtTime(new Date(ev.start.dateTime));
+                        evHtml += `<div class="cal-chip timed" style="--dot:${color};cursor:pointer" title="${title}" ${onClickAttr}>
+                    <span style="position:absolute;left:2px;top:50%;transform:translateY(-50%);width:5px;height:5px;border-radius:50%;background:${color};"></span>
+                    ${t} ${title}</div>`;
+                    }
+                });
+                if (more > 0) evHtml += `<div class="cal-more">+${more}개 더</div>`;
+
+                const yd = date.getFullYear(), md = date.getMonth(), dd = date.getDate();
+                html += `<div class="${cls}" onclick="selectDate(${yd},${md},${dd})">
+            <div class="cal-date-wrap"><div class="cal-date">${date.getDate()}</div></div>
+            <div class="cal-events-wrap">${evHtml}</div>
+        </div>`;
+            });
+
+            gridEl.innerHTML = html;
+        }
+
+        // ── Render: Event list ─────────────────────────────────────────────
+        function renderEventList() {
+            const isToday = sameDay(selectedDate, TODAY);
+            const dow = KO_DAYS_F[selectedDate.getDay()];
+            const yStr = selectedDate.getFullYear();
+            const mStr = selectedDate.getMonth() + 1;
+            const dStr = selectedDate.getDate();
+
+            document.getElementById('ev-list-header').innerHTML = `
+        <div class="ev-list-dow">${isToday ? '오늘 · ' : ''}${dow}</div>
+        <div class="ev-list-day-num ${isToday ? 'is-today' : ''}">${yStr}년 ${mStr}월 ${dStr}일</div>
+    `;
+
+            const body = document.getElementById('ev-list-body');
+
+            if (!isSignedIn) {
+                body.innerHTML = '<div class="ev-loading">로그인 후 일정을 확인할 수 있습니다</div>';
+                return;
+            }
+
+            const evs = eventsForDate(selectedDate);
+            if (evs.length === 0) {
+                body.innerHTML = '<div class="ev-empty">일정이 없습니다</div>';
+                return;
+            }
+
+            const allDay = evs.filter(e => !!e.start.date);
+            const timed = evs.filter(e => !e.start.date);
+            let html = '';
+
+            if (allDay.length) {
+                html += '<div class="ev-section-label">종일</div>';
+                allDay.forEach(ev => {
+                    const color = ev._color || '#1a73e8';
+                    const cal = calendars[ev._calId];
+                    const onClickAttr = isSignedIn ? `onclick="openEditEventModal('${ev.id}', '${ev._calId}')"` : '';
+                    html += `<div class="ev-item" style="cursor:pointer" ${onClickAttr}>
+                <div class="ev-time-col"></div>
+                <div class="ev-dot" style="background:${color}"></div>
+                <div class="ev-info">
+                    <div class="ev-title">${ev.summary || '(제목 없음)'}</div>
+                    ${cal ? `<div class="ev-meta">${cal.summary}</div>` : ''}
+                </div>
+            </div>`;
+                });
+            }
+
+            if (timed.length) {
+                if (allDay.length) html += '<div style="height:8px"></div>';
+                html += '<div class="ev-section-label">일정</div>';
+                timed.forEach(ev => {
+                    const color = ev._color || '#1a73e8';
+                    const start = new Date(ev.start.dateTime);
+                    const end = new Date(ev.end.dateTime);
+                    const cal = calendars[ev._calId];
+                    const loc = ev.location ? ` · ${ev.location}` : '';
+                    const meta = `${fmtTime(start)} – ${fmtTime(end)}${cal ? ' · ' + cal.summary : ''}${loc}`;
+                    const onClickAttr = isSignedIn ? `onclick="openEditEventModal('${ev.id}', '${ev._calId}')"` : '';
+                    html += `<div class="ev-item" style="cursor:pointer" ${onClickAttr}>
+                <div class="ev-time-col">${fmtTime(start)}</div>
+                <div class="ev-dot" style="background:${color}"></div>
+                <div class="ev-info">
+                    <div class="ev-title">${ev.summary || '(제목 없음)'}</div>
+                    <div class="ev-meta">${meta}</div>
+                </div>
+            </div>`;
+                });
+            }
+
+            body.innerHTML = html;
+        }
+
+        // ── Navigation & interaction ───────────────────────────────────────
+        function navigateMonth(dir) {
+            viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth() + dir, 1);
+            renderMiniCalendar();
+            renderMainCalendar();
+            if (isSignedIn) fetchEvents();
+        }
+
+        function selectDate(y, m, d) {
+            const targetDate = new Date(y, m, d);
+            const wasAlreadySelected = sameDay(selectedDate, targetDate);
+
+            selectedDate = targetDate;
+
+            // If selected date is outside current view month, navigate there
+            if (selectedDate.getFullYear() !== viewDate.getFullYear()
+                || selectedDate.getMonth() !== viewDate.getMonth()) {
+                viewDate = new Date(y, m, 1);
+                if (isSignedIn) fetchEvents();
+            }
+
+            renderMiniCalendar();
+            renderMainCalendar();
+            renderEventList();
+
+            if (wasAlreadySelected && isSignedIn) {
+                openNewEventModal(selectedDate);
+            }
+        }
+
+        function goToToday() {
+            viewDate = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1);
+            selectedDate = new Date(TODAY);
+            renderMiniCalendar();
+            renderMainCalendar();
+            renderEventList();
+            if (isSignedIn) fetchEvents();
+        }
+
+        function renderCalendarsList() {
+            const container = document.getElementById('calendars-list-container');
+            if (!container) return;
+
+            const ids = Object.keys(calendars);
+            if (ids.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let html = `
+        <div class="cal-list-title">내 캘린더</div>
+        <div class="cal-list-items">
+    `;
+
+            ids.forEach(id => {
+                const cal = calendars[id];
+                const checked = cal.visible ? 'checked' : '';
+                html += `
+            <div class="cal-list-item" onclick="toggleCalendarVisibility('${id}')">
+                <div class="cal-checkbox-wrapper">
+                    <input type="checkbox" class="cal-checkbox-input" ${checked} disabled>
+                    <span class="cal-checkbox-custom" style="--cal-color: ${cal.color}"></span>
+                </div>
+                <span class="cal-list-name" title="${cal.summary}">${cal.summary}</span>
+            </div>
+        `;
+            });
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function toggleCalendarVisibility(id) {
+            if (calendars[id]) {
+                calendars[id].visible = !calendars[id].visible;
+                renderCalendarsList();
+                renderMainCalendar();
+                renderEventList();
+            }
+        }
+
+        // ── Event Modal & CRUD Operations ──────────────────────────────────
+        function openNewEventModal(date) {
+            document.getElementById('modal-title-text').textContent = '새 일정 추가';
+            document.getElementById('event-id').value = '';
+            document.getElementById('event-orig-cal-id').value = '';
+            document.getElementById('event-form').reset();
+            document.getElementById('event-delete-btn').style.display = 'none';
+            document.getElementById('event-save-btn').style.display = 'block';
+
+            // Enable inputs that might have been disabled during edit of read-only calendars
+            setFormFieldsDisabled(false);
+
+            // Populate calendar options (only writable calendars)
+            populateCalendarDropdown();
+
+            // Populate default dates
+            const dateStr = formatDateISO(date);
+            document.getElementById('event-start-date').value = dateStr;
+            document.getElementById('event-end-date').value = dateStr;
+
+            // Default times (current round hour to next hour)
+            const now = new Date();
+            const startHour = String((now.getHours() + 1) % 24).padStart(2, '0');
+            const endHour = String((now.getHours() + 2) % 24).padStart(2, '0');
+            document.getElementById('event-start-time').value = `${startHour}:00`;
+            document.getElementById('event-end-time').value = `${endHour}:00`;
+
+            document.getElementById('event-allday').checked = false;
+            toggleAllDayFields();
+
+            document.getElementById('event-modal').style.display = 'flex';
+        }
+
+        function openEditEventModal(eventId, calId) {
+            const ev = allEvents.find(e => e.id === eventId && e._calId === calId);
+            if (!ev) return;
+
+            document.getElementById('modal-title-text').textContent = '일정 수정';
+            document.getElementById('event-id').value = eventId;
+            document.getElementById('event-orig-cal-id').value = calId;
+            document.getElementById('event-form').reset();
+
+            // Writable check
+            const canEdit = calendars[calId] && calendars[calId].canEdit;
+            document.getElementById('event-delete-btn').style.display = canEdit ? 'block' : 'none';
+            document.getElementById('event-save-btn').style.display = canEdit ? 'block' : 'none';
+
+            // Populate calendar select (including current calendar)
+            populateCalendarDropdown(calId);
+            document.getElementById('event-calendar').value = calId;
+            document.getElementById('event-calendar').disabled = true; // Google API limitations for event moving
+
+            // Set values
+            document.getElementById('event-title').value = ev.summary || '';
+            document.getElementById('event-location').value = ev.location || '';
+            document.getElementById('event-desc').value = ev.description || '';
+
+            if (ev.start.date) {
+                // All day event
+                document.getElementById('event-allday').checked = true;
+                document.getElementById('event-start-date').value = ev.start.date;
+
+                // Google exclusive end date: subtract 1 day to show end date correctly in Form
+                const endD = new Date(ev.end.date);
+                endD.setDate(endD.getDate() - 1);
+                document.getElementById('event-end-date').value = formatDateISO(endD);
+            } else {
+                // Timed event
+                document.getElementById('event-allday').checked = false;
+                const start = new Date(ev.start.dateTime);
+                const end = new Date(ev.end.dateTime);
+
+                document.getElementById('event-start-date').value = formatDateISO(start);
+                document.getElementById('event-start-time').value = formatTimeISO(start);
+                document.getElementById('event-end-date').value = formatDateISO(end);
+                document.getElementById('event-end-time').value = formatTimeISO(end);
+            }
+
+            toggleAllDayFields();
+            setFormFieldsDisabled(!canEdit);
+
+            document.getElementById('event-modal').style.display = 'flex';
+        }
+
+        function closeEventModal() {
+            document.getElementById('event-modal').style.display = 'none';
+            document.getElementById('event-calendar').disabled = false;
+        }
+
+        function setFormFieldsDisabled(disabled) {
+            const inputs = ['event-title', 'event-start-date', 'event-start-time', 'event-end-date', 'event-end-time', 'event-allday', 'event-location', 'event-desc'];
+            inputs.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.disabled = disabled;
+            });
+        }
+
+        function populateCalendarDropdown(currentCalId = null) {
+            const select = document.getElementById('event-calendar');
+            select.innerHTML = '';
+
+            Object.keys(calendars).forEach(id => {
+                const cal = calendars[id];
+                // Only allow writable calendars, or if it is the current calendar being edited
+                if (cal.canEdit || id === currentCalId) {
+                    const opt = document.createElement('option');
+                    opt.value = id;
+                    opt.textContent = cal.summary + (!cal.canEdit ? ' (읽기 전용)' : '');
+                    select.appendChild(opt);
+                }
+            });
+        }
+
+        function toggleAllDayFields() {
+            const isAllDay = document.getElementById('event-allday').checked;
+            const timeFields = document.querySelectorAll('.event-time-field');
+            timeFields.forEach(el => {
+                el.style.visibility = isAllDay ? 'hidden' : 'visible';
+            });
+        }
+
+        function onStartDateChange() {
+            // Keep end-date in sync with start-date if end-date is before start-date
+            const start = document.getElementById('event-start-date').value;
+            const endEl = document.getElementById('event-end-date');
+            if (start && endEl.value && endEl.value < start) {
+                endEl.value = start;
+            }
+        }
+
+        async function onSaveEvent(e) {
+            e.preventDefault();
+
+            const eventId = document.getElementById('event-id').value;
+            const calId = document.getElementById('event-calendar').value;
+            const origCalId = document.getElementById('event-orig-cal-id').value || calId;
+            const title = document.getElementById('event-title').value;
+            const isAllDay = document.getElementById('event-allday').checked;
+            const startDate = document.getElementById('event-start-date').value;
+            const endDate = document.getElementById('event-end-date').value;
+            const location = document.getElementById('event-location').value;
+            const description = document.getElementById('event-desc').value;
+
+            const resource = {
+                summary: title,
+                location: location,
+                description: description
+            };
+
+            if (isAllDay) {
+                resource.start = { date: startDate };
+                // Google Calendar exclusive end date logic: add 1 day
+                const endD = new Date(endDate);
+                endD.setDate(endD.getDate() + 1);
+                resource.end = { date: formatDateISO(endD) };
+            } else {
+                const startTime = document.getElementById('event-start-time').value || '09:00';
+                const endTime = document.getElementById('event-end-time').value || '10:00';
+
+                // Local date time to ISO String
+                const startDateTime = new Date(`${startDate}T${startTime}`);
+                const endDateTime = new Date(`${endDate}T${endTime}`);
+
+                resource.start = { dateTime: startDateTime.toISOString() };
+                resource.end = { dateTime: endDateTime.toISOString() };
+            }
+
+            try {
+                let request;
+                if (eventId) {
+                    // Update
+                    request = gapi.client.calendar.events.update({
+                        calendarId: origCalId,
+                        eventId: eventId,
+                        resource: resource
+                    });
+                } else {
+                    // Insert
+                    request = gapi.client.calendar.events.insert({
+                        calendarId: calId,
+                        resource: resource
+                    });
+                }
+
+                await request;
+                closeEventModal();
+                await fetchEvents();
+            } catch (err) {
+                console.error('Error saving event:', err);
+                alert('일정 저장 중 오류가 발생했습니다: ' + (err.result?.error?.message || err.message || err));
+            }
+        }
+
+        async function onDeleteEvent() {
+            const eventId = document.getElementById('event-id').value;
+            const calId = document.getElementById('event-orig-cal-id').value;
+            if (!eventId || !calId) return;
+
+            if (!confirm('이 일정을 삭제하시겠습니까?')) return;
+
+            try {
+                await gapi.client.calendar.events.delete({
+                    calendarId: calId,
+                    eventId: eventId
+                });
+                closeEventModal();
+                await fetchEvents();
+            } catch (err) {
+                console.error('Error deleting event:', err);
+                alert('일정 삭제 중 오류가 발생했습니다: ' + (err.result?.error?.message || err.message || err));
+            }
+        }
+
+        // Helper date formatters
+        function formatDateISO(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function formatTimeISO(date) {
+            const h = String(date.getHours()).padStart(2, '0');
+            const m = String(date.getMinutes()).padStart(2, '0');
+            return `${h}:${m}`;
+        }
+
+        // ── Init ───────────────────────────────────────────────────────────
+        window.onload = () => {
+            if (!CONFIG.CLIENT_ID || CONFIG.CLIENT_ID.startsWith('YOUR_CLIENT_ID')) {
+                document.getElementById('config-warn').style.display = 'block';
+            }
+            renderMiniCalendar();
+            renderMainCalendar();
+            renderEventList();
+        };
+    </script>
+
+    <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+    <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
+
+</body>
+
+</html>
