@@ -708,7 +708,7 @@
         }
 
         .add-event-fab {
-            position: absolute;
+            position: fixed;
             right: 20px;
             bottom: 24px;
             width: 56px;
@@ -1061,18 +1061,20 @@
 
         /* ── Responsive Tablet & Mobile Media Queries ── */
         /* 화면이 세로로 긴 모드(초소형 기기 또는 세로 모드)에서만 레이아웃을 세로로 정렬 */
-        @media (orientation: portrait) or (max-width: 650px) {
+        @media (orientation: portrait), (max-width: 650px) {
             body {
                 height: auto;
                 min-height: auto;
                 overflow-y: auto;
                 overflow-x: hidden;
+                scrollbar-gutter: stable;
             }
 
             .main-layout {
                 flex-direction: column;
                 height: auto;
-                overflow: visible;
+                overflow-x: hidden; /* visible 대신 hidden: 세로 흐름은 허용, 가로 넘침은 차단 */
+                overflow-y: visible;
             }
 
             .sidebar-left {
@@ -1107,6 +1109,8 @@
                 min-height: 650px;
                 overflow-y: auto;
                 overflow-x: hidden;
+                /* 스크롤바 등장 시 레이아웃 재계산(가로 스크롤 유발) 방지 */
+                scrollbar-gutter: stable;
             }
         }
 
@@ -1248,7 +1252,7 @@
         </div>
 
         <!-- Right: event list -->
-        <div class="sidebar-right" style="position: relative;">
+        <div class="sidebar-right">
             <div class="ev-list-header" id="ev-list-header"></div>
             <div class="ev-list-body" id="ev-list-body">
                 <div class="ev-loading">로그인 후 일정을 불러옵니다</div>
