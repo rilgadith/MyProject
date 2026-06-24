@@ -1308,7 +1308,7 @@
                 <div class="sidebar-logo-area">
                     <span class="logo-icon-sm">📅</span>
                     <span class="sidebar-app-title">My Calendar</span>
-                    <span class="sidebar-version">v1.0.27</span>
+                    <span class="sidebar-version">v1.0.28</span>
                 </div>
                 <div id="auth-user" class="sidebar-auth-user"></div>
                 <div class="sidebar-header-actions">
@@ -1325,8 +1325,8 @@
             <div class="main-cal-topbar">
                 <button class="today-btn" onclick="goToToday()">오늘</button>
                 <button class="main-nav-btn" onclick="navigateMonth(-1)">&#8249;</button>
-                <button class="main-nav-btn" onclick="navigateMonth(1)">&#8250;</button>
                 <span class="main-cal-title" id="main-cal-title"></span>
+                <button class="main-nav-btn" onclick="navigateMonth(1)">&#8250;</button>
             </div>
             <div class="cal-day-headers" id="cal-day-headers"></div>
             <div class="cal-grid" id="cal-grid" style="flex:1;overflow:hidden;"></div>
@@ -2377,6 +2377,57 @@
             return `${h}:${m}`;
         }
 
+        function initSwipeNavigation() {
+            const grid = document.getElementById('cal-grid');
+            if (!grid) return;
+
+            let startX = 0;
+            let startY = 0;
+            let isMouseDown = false;
+
+            // Touch events for mobile/tablet
+            grid.addEventListener('touchstart', (e) => {
+                startX = e.touches[0].screenX;
+                startY = e.touches[0].screenY;
+            }, { passive: true });
+
+            grid.addEventListener('touchend', (e) => {
+                const diffX = e.changedTouches[0].screenX - startX;
+                const diffY = e.changedTouches[0].screenY - startY;
+                handleSwipe(diffX, diffY);
+            }, { passive: true });
+
+            // Mouse events for PC drag navigation
+            grid.addEventListener('mousedown', (e) => {
+                if (e.button !== 0) return; // Only left click
+                startX = e.screenX;
+                startY = e.screenY;
+                isMouseDown = true;
+            });
+
+            grid.addEventListener('mouseup', (e) => {
+                if (!isMouseDown) return;
+                isMouseDown = false;
+                const diffX = e.screenX - startX;
+                const diffY = e.screenY - startY;
+                handleSwipe(diffX, diffY);
+            });
+
+            grid.addEventListener('mouseleave', () => {
+                isMouseDown = false;
+            });
+
+            function handleSwipe(diffX, diffY) {
+                if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 60) {
+                    if (diffX > 0) {
+                        navigateMonth(-1); // Swipe right -> Previous Month
+                    } else {
+                        navigateMonth(1);  // Swipe left -> Next Month
+                    }
+                }
+            }
+        }
+
         // ── Init ───────────────────────────────────────────────────────────
         window.onload = () => {
             if (!CONFIG.CLIENT_ID || CONFIG.CLIENT_ID.startsWith('YOUR_CLIENT_ID')) {
@@ -2385,6 +2436,7 @@
             renderMiniCalendar();
             renderMainCalendar();
             renderEventList();
+            initSwipeNavigation();
         };
     </script>
 
