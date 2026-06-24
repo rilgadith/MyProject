@@ -540,14 +540,14 @@
         .cal-chip.timed {
             background: transparent;
             color: #3c4043;
-            padding-left: 8px;
+            padding-left: 14px; /* 늘려서 점 마크와 텍스트(시간) 간 여백 확보 */
             position: relative;
         }
 
         .cal-chip.timed::before {
             content: '';
             position: absolute;
-            left: 2px;
+            left: 3px; /* 여백 밸런스 조정 */
             top: 50%;
             transform: translateY(-50%);
             width: 5px;
@@ -584,13 +584,13 @@
         }
         
         .main-calendar .cal-chip.timed {
-            padding-left: 6px;
+            padding-left: 11px; /* 기존 6px에서 11px로 증가시켜 점과 시간 텍스트가 겹치는 버그 해결 */
         }
         
         .main-calendar .cal-chip.timed::before {
             width: 4px;
             height: 4px;
-            left: 1px;
+            left: 2px; /* 1px에서 2px로 우측 이동 */
         }
 
         .main-calendar .cal-cell {
@@ -1154,7 +1154,7 @@
                 <div class="sidebar-logo-area">
                     <span class="logo-icon-sm">📅</span>
                     <span class="sidebar-app-title">My Calendar</span>
-                    <span class="sidebar-version">v1.0.9</span>
+                    <span class="sidebar-version">v1.1.0</span>
                 </div>
                 <div id="auth-user" class="sidebar-auth-user"></div>
                 <div class="sidebar-header-actions">
@@ -1597,9 +1597,10 @@
                         evHtml += `<div class="cal-chip" style="background:${color};cursor:pointer" title="${title}" ${onClickAttr}>${title}</div>`;
                     } else {
                         const t = fmtTime(new Date(ev.start.dateTime));
+                        // 점 마크의 inline span의 left 위치를 스타일 규칙에 맞게 left:2px로 유지하고, 텍스트 시작부인 시간(t)과 제목(title) 사이의 공백(&nbsp;)을 확보
                         evHtml += `<div class="cal-chip timed" style="--dot:${color};cursor:pointer" title="${title}" ${onClickAttr}>
-                    <span style="position:absolute;left:2px;top:50%;transform:translateY(-50%);width:5px;height:5px;border-radius:50%;background:${color};"></span>
-                    ${t} ${title}</div>`;
+                    <span style="position:absolute;left:2.5px;top:50%;transform:translateY(-50%);width:4px;height:4px;border-radius:50%;background:${color};"></span>
+                    ${t}&nbsp; ${title}</div>`;
                     }
                 });
                 if (more > 0) evHtml += `<div class="cal-more">+${more}개 더</div>`;
