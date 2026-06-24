@@ -361,7 +361,8 @@
 
         /* ── Center calendar ─────────────────────────────── */
         .main-calendar {
-            flex: 1;
+            flex: 7 7 0%;
+            min-width: 380px;
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -561,15 +562,14 @@
 
         /* ── Right sidebar ────────────────────────────────── */
         .sidebar-right {
-            width: 30%;
-            min-width: 240px;
+            flex: 3 3 0%;
+            min-width: 200px;
             max-width: 320px;
             border-left: 1px solid #e0e0e0;
             background: white;
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            flex-shrink: 0;
         }
 
         .ev-list-header {
@@ -1023,7 +1023,7 @@
         <div class="header-logo">
             <div class="logo-icon">📅</div>
         </div>
-        <h1>My Calendar <span style="font-size: 11px; color: #5f6368; font-weight: normal; margin-left: 4px; vertical-align: middle;">v1.0.6</span></h1>
+        <h1>My Calendar <span style="font-size: 11px; color: #5f6368; font-weight: normal; margin-left: 4px; vertical-align: middle;">v1.0.7</span></h1>
         <span id="auth-user"></span>
         <div class="header-right">
             <button id="refresh-btn" onclick="onRefresh()" title="새로고침">↻</button>
