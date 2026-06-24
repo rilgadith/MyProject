@@ -363,8 +363,8 @@
 
         /* ── Center calendar ─────────────────────────────── */
         .main-calendar {
-            flex: 7 7 0%;
-            min-width: 300px; /* Reduced to fit tablet portrait mode without horizontal overflow */
+            flex: 1; /* 남은 빈 공간을 모두 유연하게 차지 */
+            min-width: 0; /* 화면 축소 시 넘침을 방지 */
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -564,9 +564,8 @@
 
         /* ── Right sidebar ────────────────────────────────── */
         .sidebar-right {
-            flex: 3 3 0%;
-            min-width: 160px; /* Reduced to fit tablet portrait mode without horizontal overflow */
-            max-width: 320px;
+            width: 280px; /* 280px 너비로 고정 */
+            flex-shrink: 0; /* 강제 고정 */
             border-left: 1px solid #e0e0e0;
             background: white;
             display: flex;
@@ -603,6 +602,24 @@
 
         .main-calendar .cal-cell {
             padding: 2px 2px 1px;
+        }
+
+        .main-calendar .cal-date-wrap {
+            margin-bottom: 0px; /* 마진 없앰 */
+        }
+
+        .main-calendar .cal-date {
+            width: 20px; /* 크기 축소 */
+            height: 20px;
+            font-size: 11px;
+            border-radius: 3px; /* 둥근 사각형 형태 */
+        }
+
+        .main-calendar .cal-cell.today .cal-date {
+            border-radius: 3px !important; /* 오늘 날짜 동그라미 대신 사각형으로 표시 */
+            background: #1a73e8;
+            color: white;
+            font-weight: 600;
         }
 
         .main-calendar .cal-events-wrap {
@@ -1210,7 +1227,7 @@
                 <div class="sidebar-logo-area">
                     <span class="logo-icon-sm">📅</span>
                     <span class="sidebar-app-title">My Calendar</span>
-                    <span class="sidebar-version">v1.0.14</span>
+                    <span class="sidebar-version">v1.0.15</span>
                 </div>
                 <div id="auth-user" class="sidebar-auth-user"></div>
                 <div class="sidebar-header-actions">
