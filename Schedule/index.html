@@ -1298,7 +1298,7 @@
                 <div class="sidebar-logo-area">
                     <span class="logo-icon-sm">📅</span>
                     <span class="sidebar-app-title">My Calendar</span>
-                    <span class="sidebar-version">v1.0.21</span>
+                    <span class="sidebar-version">v1.0.22</span>
                 </div>
                 <div id="auth-user" class="sidebar-auth-user"></div>
                 <div class="sidebar-header-actions">
@@ -1565,7 +1565,16 @@
                         orderBy: 'startTime',
                         maxResults: 2500,
                     }).then(r => {
-                        return (r.result.items || []).map(ev => ({
+                        let items = r.result.items || [];
+                        const calSummary = calendars[id] ? calendars[id].summary : '';
+                        if (calSummary === '할 일' || calSummary === 'Tasks') {
+                            items = items.filter(ev => {
+                                const title = ev.summary || '';
+                                const desc = ev.description || '';
+                                return title.includes('교육비') || desc.includes('교육비');
+                            });
+                        }
+                        return items.map(ev => ({
                             ...ev,
                             _calId: id,
                             _color: (calendars[id] && calendars[id].color) || '#1a73e8',
