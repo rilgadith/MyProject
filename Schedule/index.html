@@ -661,12 +661,16 @@
 
         .ev-time-col {
             font-size: 11px;
-            color: #5f6368;
-            width: 52px;
+            color: #3c4043;
+            font-weight: 500;
+            width: 80px; /* 늘려서 캘린더 이름이 온전히 표시되도록 설정 */
             flex-shrink: 0;
-            text-align: right;
+            text-align: left; /* 좌측 정렬로 변경 */
             padding-top: 3px;
             line-height: 1.4;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .ev-dot {
@@ -1162,7 +1166,7 @@
                 <div class="sidebar-logo-area">
                     <span class="logo-icon-sm">📅</span>
                     <span class="sidebar-app-title">My Calendar</span>
-                    <span class="sidebar-version">v1.0.10</span>
+                    <span class="sidebar-version">v1.0.11</span>
                 </div>
                 <div id="auth-user" class="sidebar-auth-user"></div>
                 <div class="sidebar-header-actions">
@@ -1665,12 +1669,14 @@
                     const color = ev._color || '#1a73e8';
                     const cal = calendars[ev._calId];
                     const onClickAttr = isSignedIn ? `onclick="openEditEventModal('${ev.id}', '${ev._calId}')"` : '';
+                    const calName = cal ? cal.summary : '';
+                    const loc = ev.location ? `${ev.location}` : '';
                     html += `<div class="ev-item" style="cursor:pointer" ${onClickAttr}>
-                <div class="ev-time-col"></div>
+                <div class="ev-time-col" title="${calName}">${calName}</div>
                 <div class="ev-dot" style="background:${color}"></div>
                 <div class="ev-info">
                     <div class="ev-title">${ev.summary || '(제목 없음)'}</div>
-                    ${cal ? `<div class="ev-meta">${cal.summary}</div>` : ''}
+                    ${loc ? `<div class="ev-meta">${loc}</div>` : ''}
                 </div>
             </div>`;
                 });
@@ -1684,11 +1690,12 @@
                     const start = new Date(ev.start.dateTime);
                     const end = new Date(ev.end.dateTime);
                     const cal = calendars[ev._calId];
+                    const calName = cal ? cal.summary : '';
                     const loc = ev.location ? ` · ${ev.location}` : '';
-                    const meta = `${fmtTime(start)} – ${fmtTime(end)}${cal ? ' · ' + cal.summary : ''}${loc}`;
+                    const meta = `${fmtTime(start)} – ${fmtTime(end)}${loc}`;
                     const onClickAttr = isSignedIn ? `onclick="openEditEventModal('${ev.id}', '${ev._calId}')"` : '';
                     html += `<div class="ev-item" style="cursor:pointer" ${onClickAttr}>
-                <div class="ev-time-col">${fmtTime(start)}</div>
+                <div class="ev-time-col" title="${calName}">${calName}</div>
                 <div class="ev-dot" style="background:${color}"></div>
                 <div class="ev-info">
                     <div class="ev-title">${ev.summary || '(제목 없음)'}</div>
