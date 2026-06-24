@@ -1308,7 +1308,7 @@
                 <div class="sidebar-logo-area">
                     <span class="logo-icon-sm">📅</span>
                     <span class="sidebar-app-title">My Calendar</span>
-                    <span class="sidebar-version">v1.0.25</span>
+                    <span class="sidebar-version">v1.0.26</span>
                 </div>
                 <div id="auth-user" class="sidebar-auth-user"></div>
                 <div class="sidebar-header-actions">
@@ -1620,20 +1620,19 @@
                     try {
                         const listsResp = await gapi.client.tasks.tasklists.list();
                         const lists = listsResp.result.items || [];
-                        const tasksListsResults = await Promise.all(lists.map(async (list) => {
+                        
+                        // Find the task list named 'Cash' (case-insensitive)
+                        const cashList = lists.find(list => (list.title || '').toLowerCase() === 'cash');
+                        
+                        if (cashList) {
                             try {
                                 const tasksResp = await gapi.client.tasks.tasks.list({
-                                    tasklist: list.id,
+                                    tasklist: cashList.id,
                                     showCompleted: true,
                                     showHidden: true
                                 });
                                 const tasks = tasksResp.result.items || [];
-                                return tasks.filter(task => {
-                                    if (!task.due) return false;
-                                    const title = (task.title || '').toLowerCase();
-                                    const notes = (task.notes || '').toLowerCase();
-                                    return title.includes('cash') || notes.includes('cash');
-                                }).map(task => {
+                                taskEvents = tasks.filter(task => !!task.due).map(task => {
                                     // YYYY-MM-DD parsing
                                     const dueYMD = task.due.split('T')[0];
                                     const dueD = new Date(dueYMD);
@@ -1652,11 +1651,11 @@
                                     };
                                 });
                             } catch (e) {
-                                console.error('Failed to fetch tasks for list ' + list.title + ':', e);
-                                return [];
+                                console.error('Failed to fetch tasks for list ' + cashList.title + ':', e);
                             }
-                        }));
-                        taskEvents = tasksListsResults.flat();
+                        } else {
+                            console.warn("Could not find Google Tasks list named 'Cash'.");
+                        }
                     } catch (err) {
                         console.error('Failed to fetch tasklists:', err);
                         // Detect Tasks API 403 Forbidden (Scope mismatch or permission missing)
