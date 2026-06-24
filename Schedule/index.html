@@ -1298,7 +1298,7 @@
                 <div class="sidebar-logo-area">
                     <span class="logo-icon-sm">📅</span>
                     <span class="sidebar-app-title">My Calendar</span>
-                    <span class="sidebar-version">v1.0.22</span>
+                    <span class="sidebar-version">v1.0.23</span>
                 </div>
                 <div id="auth-user" class="sidebar-auth-user"></div>
                 <div class="sidebar-header-actions">
@@ -1569,9 +1569,9 @@
                         const calSummary = calendars[id] ? calendars[id].summary : '';
                         if (calSummary === '할 일' || calSummary === 'Tasks') {
                             items = items.filter(ev => {
-                                const title = ev.summary || '';
-                                const desc = ev.description || '';
-                                return title.includes('교육비') || desc.includes('교육비');
+                                const title = (ev.summary || '').toLowerCase();
+                                const desc = (ev.description || '').toLowerCase();
+                                return title.includes('cash') || desc.includes('cash');
                             });
                         }
                         return items.map(ev => ({
@@ -1910,7 +1910,14 @@
             }
 
             let html = `
-        <div class="cal-list-title">내 캘린더</div>
+        <div class="cal-list-title" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <span>내 캘린더</span>
+            <div style="font-size:10.5px; display:flex; gap:6px; font-weight:normal;">
+                <span onclick="setAllCalendarsVisibility(true)" style="cursor:pointer; color:#1a73e8;">전체선택</span>
+                <span style="color:#dadce0;">|</span>
+                <span onclick="setAllCalendarsVisibility(false)" style="cursor:pointer; color:#5f6368;">지우기</span>
+            </div>
+        </div>
         <div class="cal-list-items">
     `;
 
@@ -1939,6 +1946,15 @@
                 renderMainCalendar();
                 renderEventList();
             }
+        }
+
+        function setAllCalendarsVisibility(visible) {
+            Object.keys(calendars).forEach(id => {
+                calendars[id].visible = visible;
+            });
+            renderCalendarsList();
+            renderMainCalendar();
+            renderEventList();
         }
 
         // ── Event Modal & CRUD Operations ──────────────────────────────────
