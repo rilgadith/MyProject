@@ -287,6 +287,12 @@
             padding: 0 4px;
         }
 
+        .cal-list-items {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px 10px;
+        }
+
         .cal-list-item {
             display: flex;
             align-items: center;
@@ -295,7 +301,11 @@
             cursor: pointer;
             gap: 10px;
             transition: background 0.15s;
-            margin-bottom: 2px;
+            margin-bottom: 0;
+        }
+
+        .cal-list-item.full-width {
+            grid-column: span 2;
         }
 
         .cal-list-item:hover {
@@ -1298,7 +1308,7 @@
                 <div class="sidebar-logo-area">
                     <span class="logo-icon-sm">📅</span>
                     <span class="sidebar-app-title">My Calendar</span>
-                    <span class="sidebar-version">v1.0.24</span>
+                    <span class="sidebar-version">v1.0.25</span>
                 </div>
                 <div id="auth-user" class="sidebar-auth-user"></div>
                 <div class="sidebar-header-actions">
@@ -1400,6 +1410,12 @@
                         'https://www.googleapis.com/discovery/v1/apis/tasks/v1/rest'
                     ],
                 });
+                try {
+                    // Explicitly load Google Tasks API v1
+                    await gapi.client.load('tasks', 'v1');
+                } catch (err) {
+                    console.error('Failed to load Google Tasks API Client:', err);
+                }
                 gapiInited = true;
                 checkBothReady();
             });
@@ -1636,12 +1652,25 @@
                                     };
                                 });
                             } catch (e) {
+                                console.error('Failed to fetch tasks for list ' + list.title + ':', e);
                                 return [];
                             }
                         }));
                         taskEvents = tasksListsResults.flat();
                     } catch (err) {
-                        console.warn('Failed to fetch tasks:', err);
+                        console.error('Failed to fetch tasklists:', err);
+                        // Detect Tasks API 403 Forbidden (Scope mismatch or permission missing)
+                        if (err.status === 403) {
+                            alert("구글 할 일(Tasks)을 조회하려면 로그인 시 '할 일 조회 권한' 체크박스에 반드시 동의해 주셔야 합니다. 승인을 진행하기 위해 다시 로그인 화면으로 이동합니다.");
+                            // Revoke token and enforce re-login
+                            const token = gapi.client.getToken();
+                            if (token) {
+                                google.accounts.oauth2.revoke(token.access_token, () => {});
+                            }
+                            gapi.client.setToken(null);
+                            onSignedOut();
+                            return;
+                        }
                     }
                 }
 
@@ -1973,8 +2002,8 @@
                 return;
             }
 
-            // Sort calendars by custom order: 가족, 아빠, 엄마, 윤호, 윤서, 기타, 주식, 할 일
-            const CALENDAR_ORDER = ['가족', '아빠', '엄마', '윤호', '윤서', '기타', '주식', '할 일'];
+            // Sort calendars: 가족, 할 일, 아빠, 엄마, 윤호, 윤서, 기타, 주식, 대한민국의 휴일, 대한민국 공휴일
+            const CALENDAR_ORDER = ['가족', '할 일', '아빠', '엄마', '윤호', '윤서', '기타', '주식', '대한민국의 휴일', '대한민국 공휴일'];
             ids.sort((a, b) => {
                 const sumA = calendars[a] ? calendars[a].summary : '';
                 const sumB = calendars[b] ? calendars[b].summary : '';
@@ -2000,8 +2029,10 @@
             ids.forEach(id => {
                 const cal = calendars[id];
                 const checked = cal.visible ? 'checked' : '';
+                const isHoliday = cal.summary === '대한민국의 휴일' || cal.summary === '대한민국 공휴일';
+                const itemClass = isHoliday ? 'cal-list-item full-width' : 'cal-list-item';
                 html += `
-            <div class="cal-list-item" onclick="toggleCalendarVisibility('${id}')">
+            <div class="${itemClass}" onclick="toggleCalendarVisibility('${id}')">
                 <div class="cal-checkbox-wrapper">
                     <input type="checkbox" class="cal-checkbox-input" ${checked} disabled>
                     <span class="cal-checkbox-custom" style="--cal-color: ${cal.color}"></span>
