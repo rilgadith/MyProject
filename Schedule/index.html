@@ -1308,7 +1308,7 @@
                 <div class="sidebar-logo-area">
                     <span class="logo-icon-sm">📅</span>
                     <span class="sidebar-app-title">My Calendar</span>
-                    <span class="sidebar-version">v1.0.26</span>
+                    <span class="sidebar-version">v1.0.27</span>
                 </div>
                 <div id="auth-user" class="sidebar-auth-user"></div>
                 <div class="sidebar-header-actions">
@@ -1910,13 +1910,15 @@
                 allDay.forEach(ev => {
                     const color = ev._color || '#1a73e8';
                     const cal = calendars[ev._calId];
-                    const onClickAttr = isSignedIn ? `onclick="openEditEventModal('${ev.id}', '${ev._calId}')"` : '';
+                    const isTasks = ev._calId === 'tasks_virtual_calendar';
+                    const onClickAttr = (isSignedIn && !isTasks) ? `onclick="openEditEventModal('${ev.id}', '${ev._calId}')"` : '';
+                    const cursorStyle = isTasks ? 'cursor:default' : 'cursor:pointer';
                     let calName = cal ? cal.summary : '';
                     if (calName === '대한민국의 휴일' || calName === '대한민국 공휴일') {
                         calName = '휴일';
                     }
                     const loc = ev.location ? `${ev.location}` : '';
-                    html += `<div class="ev-item" style="cursor:pointer" ${onClickAttr}>
+                    html += `<div class="ev-item" style="${cursorStyle}" ${onClickAttr}>
                 <div class="ev-time-col"><span class="ev-badge" style="background:${color}" title="${cal ? cal.summary : ''}">${calName}</span></div>
                 <div class="ev-info">
                     <div class="ev-title">${ev.summary || '(제목 없음)'}</div>
@@ -1934,14 +1936,16 @@
                     const start = new Date(ev.start.dateTime);
                     const end = new Date(ev.end.dateTime);
                     const cal = calendars[ev._calId];
-                    const onClickAttr = isSignedIn ? `onclick="openEditEventModal('${ev.id}', '${ev._calId}')"` : '';
+                    const isTasks = ev._calId === 'tasks_virtual_calendar';
+                    const onClickAttr = (isSignedIn && !isTasks) ? `onclick="openEditEventModal('${ev.id}', '${ev._calId}')"` : '';
+                    const cursorStyle = isTasks ? 'cursor:default' : 'cursor:pointer';
                     let calName = cal ? cal.summary : '';
                     if (calName === '대한민국의 휴일' || calName === '대한민국 공휴일') {
                         calName = '휴일';
                     }
                     const loc = ev.location ? ` · ${ev.location}` : '';
                     const meta = `${fmtTime(start)} – ${fmtTime(end)}${loc}`;
-                    html += `<div class="ev-item" style="cursor:pointer" ${onClickAttr}>
+                    html += `<div class="ev-item" style="${cursorStyle}" ${onClickAttr}>
                 <div class="ev-time-col"><span class="ev-badge" style="background:${color}" title="${cal ? cal.summary : ''}">${calName}</span></div>
                 <div class="ev-info">
                     <div class="ev-title">${ev.summary || '(제목 없음)'}</div>
