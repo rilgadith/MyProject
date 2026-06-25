@@ -173,8 +173,9 @@
             padding: 16px 12px;
             background: white;
             border-right: 1px solid #e0e0e0;
-            overflow-y: auto;
             flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
         }
 
         /* ── Mini calendar ───────────────────────────────── */
@@ -1359,14 +1360,13 @@
 
         /* Today's Tasks Columns */
         .routine-tasks-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr 1fr;
+            display: flex;
             gap: 16px;
             flex: 1;
             overflow: hidden; /* Prevent bleeding out */
         }
         .routine-col {
+            flex: 1;
             background: #f8f9fa;
             border-radius: 12px;
             padding: 12px;
@@ -1562,7 +1562,7 @@
                 <div class="sidebar-logo-area">
                     <span class="logo-icon-sm">📅</span>
                     <span class="sidebar-app-title">My Calendar</span>
-                    <span class="sidebar-version">v1.1.3</span>
+                    <span class="sidebar-version">v1.1.4</span>
                 </div>
                 <div id="auth-user" class="sidebar-auth-user"></div>
                 <div class="sidebar-header-actions">
@@ -1596,7 +1596,7 @@
 
             <div id="routine-layout" class="routine-layout">
                 <div class="routine-tasks-container">
-                    <div class="routine-col" id="col-calendar">
+                    <div class="routine-col" id="col-calendar" style="flex: 0 0 220px;">
                         <div class="routine-col-header">달성 히스토리</div>
                         <div class="routine-history-grid" id="routine-history-grid"></div>
                     </div>
@@ -2740,20 +2740,23 @@
             const routTab = document.getElementById('tab-routine');
             const schedCont = document.getElementById('schedule-view-container');
             const routCont = document.getElementById('routine-layout');
-            const sidebar = document.getElementById('sidebar-right');
+            const sidebarRight = document.getElementById('sidebar-right');
+            const sidebarLeft = document.querySelector('.sidebar-left');
 
             if(viewName === 'schedule') {
                 schedTab.classList.add('active');
                 routTab.classList.remove('active');
                 schedCont.style.display = 'flex';
                 routCont.style.display = 'none';
-                sidebar.style.display = 'flex';
+                sidebarRight.style.display = 'flex';
+                sidebarLeft.style.display = 'flex';
             } else {
                 schedTab.classList.remove('active');
                 routTab.classList.add('active');
                 schedCont.style.display = 'none';
                 routCont.style.display = 'flex';
-                sidebar.style.display = 'none';
+                sidebarRight.style.display = 'none';
+                sidebarLeft.style.display = 'none';
             }
         }
 
