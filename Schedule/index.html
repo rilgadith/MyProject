@@ -6,7 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Calendar</title>
     <!-- Data URL 기반 SVG 파비콘 (별도 파일 업로드 없이 즉시 적용) -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📅</text></svg>">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📅</text></svg>">
     <!--
     ================================================================
     Google Calendar 연동 설정 방법
@@ -30,7 +31,8 @@
         }
 
         html {
-            overflow-x: hidden; /* Prevent horizontal scroll completely */
+            overflow-x: hidden;
+            /* Prevent horizontal scroll completely */
         }
 
         body {
@@ -38,16 +40,19 @@
             background: #f8f9fa;
             color: #3c4043;
             height: 100vh;
-            min-height: 650px; /* Prevent UI crushing on small screens */
+            min-height: 650px;
+            /* Prevent UI crushing on small screens */
             display: flex;
             flex-direction: column;
-            overflow-x: hidden; /* Prevent horizontal scroll */
+            overflow-x: hidden;
+            /* Prevent horizontal scroll */
             overflow-y: hidden;
         }
 
         /* ── Header (Deprecated) ────────────────────────── */
         .header {
-            display: none !important; /* Top header completely removed */
+            display: none !important;
+            /* Top header completely removed */
         }
 
         /* ── Sidebar Header (Integrated) ─────────────────── */
@@ -104,7 +109,8 @@
             border-radius: 4px;
             color: #5f6368;
             font-size: 14px;
-            display: none; /* Managed by JS */
+            display: none;
+            /* Managed by JS */
             align-items: center;
             justify-content: center;
             width: 32px;
@@ -375,8 +381,10 @@
 
         /* ── Center calendar ─────────────────────────────── */
         .main-calendar {
-            flex: 1; /* 남은 빈 공간을 모두 유연하게 차지 */
-            min-width: 0; /* 화면 축소 시 넘침을 방지 */
+            flex: 1;
+            /* 남은 빈 공간을 모두 유연하게 차지 */
+            min-width: 0;
+            /* 화면 축소 시 넘침을 방지 */
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -552,14 +560,16 @@
         .cal-chip.timed {
             background: transparent;
             color: #3c4043;
-            padding-left: 14px; /* 늘려서 점 마크와 텍스트(시간) 간 여백 확보 */
+            padding-left: 14px;
+            /* 늘려서 점 마크와 텍스트(시간) 간 여백 확보 */
             position: relative;
         }
 
         .cal-chip.timed::before {
             content: '';
             position: absolute;
-            left: 3px; /* 여백 밸런스 조정 */
+            left: 3px;
+            /* 여백 밸런스 조정 */
             top: 50%;
             transform: translateY(-50%);
             width: 5px;
@@ -576,8 +586,10 @@
 
         /* ── Right sidebar ────────────────────────────────── */
         .sidebar-right {
-            width: 280px; /* 280px 너비로 고정 */
-            flex-shrink: 0; /* 강제 고정 */
+            width: 280px;
+            /* 280px 너비로 고정 */
+            flex-shrink: 0;
+            /* 강제 고정 */
             border-left: 1px solid #e0e0e0;
             background: white;
             display: flex;
@@ -593,19 +605,22 @@
             border-radius: 2px;
             margin-bottom: 1px;
         }
-        
+
         .main-calendar .cal-chip.timed {
-            padding-left: 11px; /* 기존 6px에서 11px로 증가시켜 점과 시간 텍스트가 겹치는 버그 해결 */
+            padding-left: 11px;
+            /* 기존 6px에서 11px로 증가시켜 점과 시간 텍스트가 겹치는 버그 해결 */
         }
-        
+
         .main-calendar .cal-chip.timed::before {
             width: 4px;
             height: 4px;
-            left: 2px; /* 1px에서 2px로 우측 이동 */
+            left: 2px;
+            /* 1px에서 2px로 우측 이동 */
         }
 
         .main-calendar .cal-more {
-            font-size: 9px; /* 일정 칩 글자 크기에 맞춰 축소 */
+            font-size: 9px;
+            /* 일정 칩 글자 크기에 맞춰 축소 */
             color: #5f6368;
             padding: 0px 4px;
             line-height: 1.3;
@@ -617,18 +632,22 @@
         }
 
         .main-calendar .cal-date-wrap {
-            margin-bottom: 0px; /* 마진 없앰 */
+            margin-bottom: 0px;
+            /* 마진 없앰 */
         }
 
         .main-calendar .cal-date {
-            width: 20px; /* 크기 축소 */
+            width: 20px;
+            /* 크기 축소 */
             height: 20px;
             font-size: 11px;
-            border-radius: 3px; /* 둥근 사각형 형태 */
+            border-radius: 3px;
+            /* 둥근 사각형 형태 */
         }
 
         .main-calendar .cal-cell.today .cal-date {
-            border-radius: 3px !important; /* 오늘 날짜 동그라미 대신 사각형으로 표시 */
+            border-radius: 3px !important;
+            /* 오늘 날짜 동그라미 대신 사각형으로 표시 */
             background: #1a73e8;
             color: white;
             font-weight: 600;
@@ -673,7 +692,8 @@
             text-transform: uppercase;
             letter-spacing: 0.6px;
             padding: 5px 12px;
-            background: #f1f3f4; /* 헤더 배경색 지정 */
+            background: #f1f3f4;
+            /* 헤더 배경색 지정 */
             border-radius: 4px;
             margin: 10px 12px 6px;
         }
@@ -692,7 +712,8 @@
         }
 
         .ev-time-col {
-            width: 48px; /* 한글 2글자 배지 너비에 맞춰 축소 */
+            width: 48px;
+            /* 한글 2글자 배지 너비에 맞춰 축소 */
             flex-shrink: 0;
             display: flex;
             align-items: center;
@@ -714,7 +735,8 @@
         }
 
         .ev-dot {
-            display: none; /* 캘린더 배지 배경색으로 대체되어 원형 점 마크는 숨김 */
+            display: none;
+            /* 캘린더 배지 배경색으로 대체되어 원형 점 마크는 숨김 */
         }
 
         .add-event-fab {
@@ -728,7 +750,8 @@
             color: white;
             border: none;
             cursor: pointer;
-            display: none; /* Managed by JS to set 'flex' or 'none' */
+            display: none;
+            /* Managed by JS to set 'flex' or 'none' */
             align-items: center;
             justify-content: center;
             font-size: 28px;
@@ -1071,7 +1094,8 @@
 
         /* ── Responsive Tablet & Mobile Media Queries ── */
         /* 화면이 세로로 긴 모드(초소형 기기 또는 세로 모드)에서만 레이아웃을 세로로 정렬 */
-        @media (orientation: portrait), (max-width: 650px) {
+        @media (orientation: portrait),
+        (max-width: 650px) {
             body {
                 height: auto;
                 min-height: auto;
@@ -1083,7 +1107,8 @@
             .main-layout {
                 flex-direction: column;
                 height: auto;
-                overflow-x: hidden; /* visible 대신 hidden: 세로 흐름은 허용, 가로 넘침은 차단 */
+                overflow-x: hidden;
+                /* visible 대신 hidden: 세로 흐름은 허용, 가로 넘침은 차단 */
                 overflow-y: visible;
             }
 
@@ -1097,7 +1122,8 @@
 
             .main-calendar {
                 width: 100%;
-                height: 580px; /* Keep calendar height fixed to prevent vertical crushing */
+                height: 580px;
+                /* Keep calendar height fixed to prevent vertical crushing */
                 flex-shrink: 0;
                 overflow: hidden;
             }
@@ -1106,7 +1132,8 @@
                 width: 100%;
                 border-left: none;
                 border-top: 1px solid #e0e0e0;
-                height: 400px; /* Give event list a decent height to scroll events */
+                height: 400px;
+                /* Give event list a decent height to scroll events */
                 flex-shrink: 0;
             }
         }
@@ -1131,18 +1158,21 @@
             margin-top: 4px;
             justify-content: space-between;
         }
+
         .weekday-checkbox {
             cursor: pointer;
             position: relative;
             flex: 1;
             text-align: center;
         }
+
         .weekday-checkbox input {
             position: absolute;
             opacity: 0;
             width: 0;
             height: 0;
         }
+
         .weekday-checkbox span {
             display: block;
             width: 32px;
@@ -1157,13 +1187,15 @@
             transition: background 0.15s, color 0.15s, border-color 0.15s;
             user-select: none;
         }
-        .weekday-checkbox input:checked + span {
+
+        .weekday-checkbox input:checked+span {
             background: #1a73e8;
             color: white;
             border-color: #1a73e8;
             font-weight: 500;
         }
-        .weekday-checkbox input:disabled + span {
+
+        .weekday-checkbox input:disabled+span {
             background: #f1f3f4;
             color: #bdc1c6;
             border-color: #dadce0;
@@ -1308,7 +1340,7 @@
                 <div class="sidebar-logo-area">
                     <span class="logo-icon-sm">📅</span>
                     <span class="sidebar-app-title">My Calendar</span>
-                    <span class="sidebar-version">v1.0.28</span>
+                    <span class="sidebar-version">v1.1.0</span>
                 </div>
                 <div id="auth-user" class="sidebar-auth-user"></div>
                 <div class="sidebar-header-actions">
@@ -1339,7 +1371,8 @@
                 <div class="ev-loading">로그인 후 일정을 불러옵니다</div>
             </div>
             <!-- 플로팅 일정 추가 버튼 (스크롤 없이 우측 하단에 상시 고정 표시) -->
-            <button class="add-event-fab" id="ev-list-footer" onclick="openNewEventModal(selectedDate)" title="일정 추가" style="display:none;">
+            <button class="add-event-fab" id="ev-list-footer" onclick="openNewEventModal(selectedDate)" title="일정 추가"
+                style="display:none;">
                 ＋
             </button>
         </div>
@@ -1620,10 +1653,10 @@
                     try {
                         const listsResp = await gapi.client.tasks.tasklists.list();
                         const lists = listsResp.result.items || [];
-                        
+
                         // Find the task list named 'Cash' (case-insensitive)
                         const cashList = lists.find(list => (list.title || '').toLowerCase() === 'cash');
-                        
+
                         if (cashList) {
                             try {
                                 const tasksResp = await gapi.client.tasks.tasks.list({
@@ -1664,7 +1697,7 @@
                             // Revoke token and enforce re-login
                             const token = gapi.client.getToken();
                             if (token) {
-                                google.accounts.oauth2.revoke(token.access_token, () => {});
+                                google.accounts.oauth2.revoke(token.access_token, () => { });
                             }
                             gapi.client.setToken(null);
                             onSignedOut();
@@ -2074,7 +2107,7 @@
             document.getElementById('event-orig-cal-id').value = '';
             document.getElementById('event-form').reset();
             document.getElementById('event-recurrence').value = '';
-            
+
             // Clear weekday checkboxes and hide the group
             const dayCheckboxes = document.querySelectorAll('.weekday-checkbox input');
             dayCheckboxes.forEach(cb => cb.checked = false);
