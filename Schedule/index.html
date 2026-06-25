@@ -1302,7 +1302,7 @@
             flex-direction: column;
             flex: 1;
             padding: 20px;
-            overflow-y: auto;
+            overflow: hidden; /* Prevent full page scroll, let columns scroll */
             background: #fff;
         }
 
@@ -1310,46 +1310,43 @@
         .routine-history-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 8px;
-            margin-bottom: 24px;
+            gap: 1px;
+            background: #e0e0e0; /* border color */
+            border: 1px solid #e0e0e0;
         }
         .routine-hist-day {
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 8px;
-            min-height: 80px;
+            padding: 2px 4px;
             display: flex;
             flex-direction: column;
-            background: #f8f9fa;
+            background: white;
+            min-height: 40px;
         }
         .routine-hist-date {
-            font-size: 12px;
+            font-size: 10px;
             color: #5f6368;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
             font-weight: 500;
+            text-align: right;
         }
         .routine-hist-bars {
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 2px;
             flex: 1;
             justify-content: flex-end;
         }
         .hist-bar-row {
             display: flex;
             align-items: center;
-            font-size: 10px;
-            gap: 4px;
         }
         .hist-bar-label {
-            width: 24px;
-            color: #5f6368;
+            display: none; /* Hide in calendar view to save space */
         }
         .hist-bar-track {
             flex: 1;
             background: #e8eaed;
-            height: 6px;
-            border-radius: 3px;
+            height: 4px;
+            border-radius: 2px;
             overflow: hidden;
         }
         .hist-bar-fill {
@@ -1362,45 +1359,50 @@
 
         /* Today's Tasks Columns */
         .routine-tasks-container {
-            display: flex;
-            gap: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 16px;
             flex: 1;
+            overflow: hidden; /* Prevent bleeding out */
         }
         .routine-col {
-            flex: 1;
             background: #f8f9fa;
             border-radius: 12px;
-            padding: 16px;
+            padding: 12px;
             display: flex;
             flex-direction: column;
             border: 1px solid #e0e0e0;
+            overflow-y: auto; /* Columns scroll independently */
+            min-height: 0;
         }
         .routine-col-header {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 600;
             color: #3c4043;
-            margin-bottom: 16px;
+            margin-bottom: 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-shrink: 0;
         }
         .routine-col-header .progress-text {
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 500;
             color: #1a73e8;
         }
         .routine-task-list {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
         }
         .routine-task-item {
             display: flex;
             align-items: flex-start;
-            gap: 12px;
+            gap: 8px;
             background: white;
-            padding: 12px;
-            border-radius: 8px;
+            padding: 8px;
+            border-radius: 6px;
             border: 1px solid #dadce0;
             transition: box-shadow 0.2s;
         }
@@ -1408,13 +1410,13 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
         .routine-task-item input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            margin-top: 2px;
+            width: 14px;
+            height: 14px;
+            margin-top: 1px;
             cursor: pointer;
         }
         .routine-task-title {
-            font-size: 14px;
+            font-size: 12px;
             color: #3c4043;
             flex: 1;
             word-break: break-all;
@@ -1560,7 +1562,7 @@
                 <div class="sidebar-logo-area">
                     <span class="logo-icon-sm">📅</span>
                     <span class="sidebar-app-title">My Calendar</span>
-                    <span class="sidebar-version">v1.1.2</span>
+                    <span class="sidebar-version">v1.1.3</span>
                 </div>
                 <div id="auth-user" class="sidebar-auth-user"></div>
                 <div class="sidebar-header-actions">
@@ -1593,8 +1595,11 @@
             </div>
 
             <div id="routine-layout" class="routine-layout">
-                <div class="routine-history-grid" id="routine-history-grid"></div>
                 <div class="routine-tasks-container">
+                    <div class="routine-col" id="col-calendar">
+                        <div class="routine-col-header">달성 히스토리</div>
+                        <div class="routine-history-grid" id="routine-history-grid"></div>
+                    </div>
                     <div class="routine-col" id="col-mom">
                         <div class="routine-col-header">엄마 <span class="progress-text" id="prog-mom">0%</span></div>
                         <div class="routine-task-list" id="list-mom">
@@ -2968,28 +2973,46 @@
             });
             
             let html = '';
+            
+            // 요일 헤더
+            let daysOfWeek = ['일', '월', '화', '수', '목', '금', '토'];
+            for(let dow of daysOfWeek) {
+                html += `<div style="background:white; text-align:center; font-size:10px; font-weight:bold; color:#5f6368; padding:4px 0;">${dow}</div>`;
+            }
+            
+            // 빈 칸
+            for(let i=0; i<firstDay.getDay(); i++) {
+                html += `<div style="background:#f8f9fa;"></div>`;
+            }
+            
+            // 날짜 셀 렌더링
             for(let d=1; d<=lastDay.getDate(); d++) {
                 let dStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                 let data = routineDataByDate[dStr] || { '엄마': 0, '윤호': 0, '윤서': 0 };
                 
                 html += `<div class="routine-hist-day">
-                    <div class="routine-hist-date">${d}일</div>
+                    <div class="routine-hist-date">${d}</div>
                     <div class="routine-hist-bars">
                         <div class="hist-bar-row">
-                            <span class="hist-bar-label">엄.</span>
                             <div class="hist-bar-track"><div class="hist-bar-fill mom" style="width:${data['엄마'] || 0}%"></div></div>
                         </div>
                         <div class="hist-bar-row">
-                            <span class="hist-bar-label">호.</span>
                             <div class="hist-bar-track"><div class="hist-bar-fill yunho" style="width:${data['윤호'] || 0}%"></div></div>
                         </div>
                         <div class="hist-bar-row">
-                            <span class="hist-bar-label">서.</span>
                             <div class="hist-bar-track"><div class="hist-bar-fill yunseo" style="width:${data['윤서'] || 0}%"></div></div>
                         </div>
                     </div>
                 </div>`;
             }
+            
+            // 끝나는 빈 칸
+            let totalCells = firstDay.getDay() + lastDay.getDate();
+            let remainingCells = (7 - (totalCells % 7)) % 7;
+            for(let i=0; i<remainingCells; i++) {
+                html += `<div style="background:#f8f9fa;"></div>`;
+            }
+            
             grid.innerHTML = html;
         }
 
