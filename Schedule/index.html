@@ -1203,6 +1203,73 @@
         }
 
         /* 비율(%) 기반 사이드바로 조절되므로 기존 픽셀 기반 고정폭 미디어 쿼리는 제거합니다. */
+
+        /* ── Weather Widget (Sidebar embedded) ───────────────────────── */
+        .sidebar-weather-widget {
+            border-bottom: 1px solid #e0e0e0;
+            padding: 12px 20px;
+            flex-shrink: 0;
+            background: #f8f9fa;
+        }
+
+        .sidebar-weather-header {
+            font-size: 13px;
+            font-weight: 600;
+            color: #3c4043;
+            margin-bottom: 8px;
+        }
+
+        .weather-hourly-container {
+            overflow-x: auto;
+            padding-bottom: 4px; /* For scrollbar */
+            scrollbar-width: thin;
+        }
+
+        .weather-hourly-table {
+            display: flex;
+            gap: 12px;
+        }
+
+        .weather-hour-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            min-width: 44px;
+        }
+
+        .weather-hour-col.new-day {
+            border-left: 1px dashed #dadce0;
+            padding-left: 12px;
+            margin-left: 2px;
+        }
+
+        .w-time {
+            font-size: 12px;
+            color: #5f6368;
+            text-align: center;
+            line-height: 1.3;
+        }
+
+        .w-icon {
+            font-size: 20px;
+        }
+
+        .w-temp {
+            font-size: 13px;
+            font-weight: 600;
+            color: #3c4043;
+        }
+
+        .w-pop {
+            font-size: 11px;
+            color: #1a73e8;
+        }
+
+        .w-precip {
+            font-size: 11px;
+            color: #5f6368;
+        }
     </style>
 </head>
 
@@ -1340,7 +1407,7 @@
                 <div class="sidebar-logo-area">
                     <span class="logo-icon-sm">📅</span>
                     <span class="sidebar-app-title">My Calendar</span>
-                    <span class="sidebar-version">v1.1.0</span>
+                    <span class="sidebar-version">v1.1.1</span>
                 </div>
                 <div id="auth-user" class="sidebar-auth-user"></div>
                 <div class="sidebar-header-actions">
@@ -1367,6 +1434,14 @@
         <!-- Right: event list -->
         <div class="sidebar-right">
             <div class="ev-list-header" id="ev-list-header"></div>
+            <div id="sidebar-weather-widget" class="sidebar-weather-widget">
+                <div class="sidebar-weather-header" id="weather-summary-text" onclick="toggleHourlyWeather()" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                    날씨 불러오는 중... <span id="weather-toggle-icon">▾</span>
+                </div>
+                <div class="weather-hourly-container" id="weather-hourly-container" style="display:none;">
+                    <div class="weather-hourly-table" id="weather-hourly-table"></div>
+                </div>
+            </div>
             <div class="ev-list-body" id="ev-list-body">
                 <div class="ev-loading">로그인 후 일정을 불러옵니다</div>
             </div>
@@ -2461,6 +2536,117 @@
             }
         }
 
+        // ── Weather Widget Logic ──────────────────────────────────────────
+        function toggleHourlyWeather() {
+            const container = document.getElementById('weather-hourly-container');
+            const icon = document.getElementById('weather-toggle-icon');
+            if (container.style.display === 'none') {
+                container.style.display = 'block';
+                if(icon) icon.innerText = '▴';
+            } else {
+                container.style.display = 'none';
+                if(icon) icon.innerText = '▾';
+            }
+        }
+
+        function getWeatherEmoji(code) {
+            // WMO Weather interpretation codes (https://open-meteo.com/en/docs)
+            if (code === 0) return '☀️'; // Clear sky
+            if (code === 1 || code === 2 || code === 3) return '🌤️'; // Mainly clear, partly cloudy, and overcast
+            if (code === 45 || code === 48) return '🌫️'; // Fog
+            if (code === 51 || code === 53 || code === 55) return '🌦️'; // Drizzle
+            if (code === 56 || code === 57) return '🌧️'; // Freezing Drizzle
+            if (code === 61 || code === 63 || code === 65) return '🌧️'; // Rain
+            if (code === 66 || code === 67) return '🌧️'; // Freezing Rain
+            if (code === 71 || code === 73 || code === 75) return '❄️'; // Snow fall
+            if (code === 77) return '❄️'; // Snow grains
+            if (code === 80 || code === 81 || code === 82) return '☔'; // Rain showers
+            if (code === 85 || code === 86) return '🌨️'; // Snow showers
+            if (code === 95) return '⛈️'; // Thunderstorm
+            if (code === 96 || code === 99) return '⛈️'; // Thunderstorm with slight and heavy hail
+            return '☁️';
+        }
+
+        async function initWeatherWidget() {
+            try {
+                // Gwangmyeong-si coordinates: 37.4785, 126.8646
+                const url = 'https://api.open-meteo.com/v1/forecast?latitude=37.4785&longitude=126.8646&daily=weather_code,temperature_2m_max,temperature_2m_min&hourly=temperature_2m,precipitation_probability,precipitation,weather_code&timezone=Asia%2FTokyo&forecast_days=2';
+                
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Network response was not ok');
+                const data = await response.json();
+
+                // 1. Update Daily Summary
+                const todayMax = Math.round(data.daily.temperature_2m_max[0]);
+                const todayMin = Math.round(data.daily.temperature_2m_min[0]);
+                const todayCode = data.daily.weather_code[0];
+                const todayEmoji = getWeatherEmoji(todayCode);
+
+                document.getElementById('weather-summary-text').innerText = `오늘 광명: ${todayEmoji} 최저 ${todayMin}°C / 최고 ${todayMax}°C`;
+
+                // 2. Populate Hourly Table
+                const hourlyTable = document.getElementById('weather-hourly-table');
+                hourlyTable.innerHTML = '';
+
+                const now = new Date();
+                // Find index of current hour
+                const localTimeString = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 13) + ':00';
+                
+                let startIndex = data.hourly.time.findIndex(t => t === localTimeString);
+                if (startIndex === -1) startIndex = 0; // fallback
+
+                // Get 24 hours of data starting from current hour
+                for (let i = startIndex; i < startIndex + 24; i++) {
+                    if (i >= data.hourly.time.length) break;
+
+                    const timeStr = data.hourly.time[i]; // "2026-06-25T12:00"
+                    const dateObj = new Date(timeStr);
+                    const hour = dateObj.getHours();
+                    const timeLabel = (i === startIndex) ? '지금' : `${hour}시`;
+
+                    const temp = Math.round(data.hourly.temperature_2m[i]);
+                    const precipProb = data.hourly.precipitation_probability[i];
+                    const precipAmt = data.hourly.precipitation[i];
+                    const code = data.hourly.weather_code[i];
+
+                    const col = document.createElement('div');
+                    col.className = 'weather-hour-col';
+                    
+                    const timeEl = document.createElement('div');
+                    timeEl.className = 'w-time';
+                    timeEl.innerText = timeLabel;
+
+                    const iconEl = document.createElement('div');
+                    iconEl.className = 'w-icon';
+                    iconEl.innerText = getWeatherEmoji(code);
+
+                    const tempEl = document.createElement('div');
+                    tempEl.className = 'w-temp';
+                    tempEl.innerText = `${temp}°`;
+
+                    const popEl = document.createElement('div');
+                    popEl.className = 'w-pop';
+                    popEl.innerText = precipProb > 0 ? `${precipProb}%` : '';
+
+                    const precipEl = document.createElement('div');
+                    precipEl.className = 'w-precip';
+                    precipEl.innerText = precipAmt > 0 ? `${precipAmt}mm` : '';
+
+                    col.appendChild(timeEl);
+                    col.appendChild(iconEl);
+                    col.appendChild(tempEl);
+                    col.appendChild(popEl);
+                    col.appendChild(precipEl);
+
+                    hourlyTable.appendChild(col);
+                }
+
+            } catch (err) {
+                console.error('Failed to fetch weather data:', err);
+                document.getElementById('weather-summary-text').innerText = '날씨 오류';
+            }
+        }
+
         // ── Init ───────────────────────────────────────────────────────────
         window.onload = () => {
             if (!CONFIG.CLIENT_ID || CONFIG.CLIENT_ID.startsWith('YOUR_CLIENT_ID')) {
@@ -2470,6 +2656,7 @@
             renderMainCalendar();
             renderEventList();
             initSwipeNavigation();
+            initWeatherWidget();
         };
     </script>
 
