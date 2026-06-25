@@ -1270,6 +1270,159 @@
             font-size: 11px;
             color: #5f6368;
         }
+        /* ── View Switcher & Routine View ───────────────────────────────── */
+        .view-switcher {
+            display: flex;
+            background: #f1f3f4;
+            border-radius: 8px;
+            padding: 4px;
+            margin-right: auto;
+            margin-left: 16px;
+        }
+
+        .view-tab {
+            padding: 6px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #5f6368;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .view-tab.active {
+            background: white;
+            color: #1a73e8;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        /* Routine Layout Container */
+        .routine-layout {
+            display: none;
+            flex-direction: column;
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #fff;
+        }
+
+        /* Routine History Calendar Grid */
+        .routine-history-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+        .routine-hist-day {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 8px;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            background: #f8f9fa;
+        }
+        .routine-hist-date {
+            font-size: 12px;
+            color: #5f6368;
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+        .routine-hist-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+            justify-content: flex-end;
+        }
+        .hist-bar-row {
+            display: flex;
+            align-items: center;
+            font-size: 10px;
+            gap: 4px;
+        }
+        .hist-bar-label {
+            width: 24px;
+            color: #5f6368;
+        }
+        .hist-bar-track {
+            flex: 1;
+            background: #e8eaed;
+            height: 6px;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .hist-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+        }
+        .hist-bar-fill.mom { background: #e67c73; }
+        .hist-bar-fill.yunho { background: #f6bf26; }
+        .hist-bar-fill.yunseo { background: #7986cb; }
+
+        /* Today's Tasks Columns */
+        .routine-tasks-container {
+            display: flex;
+            gap: 20px;
+            flex: 1;
+        }
+        .routine-col {
+            flex: 1;
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #e0e0e0;
+        }
+        .routine-col-header {
+            font-size: 16px;
+            font-weight: 600;
+            color: #3c4043;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .routine-col-header .progress-text {
+            font-size: 13px;
+            font-weight: 500;
+            color: #1a73e8;
+        }
+        .routine-task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .routine-task-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #dadce0;
+            transition: box-shadow 0.2s;
+        }
+        .routine-task-item:hover {
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .routine-task-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin-top: 2px;
+            cursor: pointer;
+        }
+        .routine-task-title {
+            font-size: 14px;
+            color: #3c4043;
+            flex: 1;
+            word-break: break-all;
+        }
+        .routine-task-item.completed .routine-task-title {
+            text-decoration: line-through;
+            color: #9aa0a6;
+        }
     </style>
 </head>
 
@@ -1407,7 +1560,7 @@
                 <div class="sidebar-logo-area">
                     <span class="logo-icon-sm">📅</span>
                     <span class="sidebar-app-title">My Calendar</span>
-                    <span class="sidebar-version">v1.1.1</span>
+                    <span class="sidebar-version">v1.1.2</span>
                 </div>
                 <div id="auth-user" class="sidebar-auth-user"></div>
                 <div class="sidebar-header-actions">
@@ -1426,9 +1579,42 @@
                 <button class="main-nav-btn" onclick="navigateMonth(-1)">&#8249;</button>
                 <span class="main-cal-title" id="main-cal-title"></span>
                 <button class="main-nav-btn" onclick="navigateMonth(1)">&#8250;</button>
+
+                <!-- New View Switcher -->
+                <div class="view-switcher">
+                    <div class="view-tab active" id="tab-schedule" onclick="switchView('schedule')">일정 캘린더</div>
+                    <div class="view-tab" id="tab-routine" onclick="switchView('routine')">매일 루틴</div>
+                </div>
             </div>
-            <div class="cal-day-headers" id="cal-day-headers"></div>
-            <div class="cal-grid" id="cal-grid" style="flex:1;overflow:hidden;"></div>
+
+            <div id="schedule-view-container" style="display:flex; flex-direction:column; flex:1; overflow:hidden;">
+                <div class="cal-day-headers" id="cal-day-headers"></div>
+                <div class="cal-grid" id="cal-grid" style="flex:1;overflow:hidden;"></div>
+            </div>
+
+            <div id="routine-layout" class="routine-layout">
+                <div class="routine-history-grid" id="routine-history-grid"></div>
+                <div class="routine-tasks-container">
+                    <div class="routine-col" id="col-mom">
+                        <div class="routine-col-header">엄마 <span class="progress-text" id="prog-mom">0%</span></div>
+                        <div class="routine-task-list" id="list-mom">
+                            <div style="font-size:13px; color:#5f6368; padding: 12px;">로딩 중...</div>
+                        </div>
+                    </div>
+                    <div class="routine-col" id="col-yunho">
+                        <div class="routine-col-header">윤호 <span class="progress-text" id="prog-yunho">0%</span></div>
+                        <div class="routine-task-list" id="list-yunho">
+                            <div style="font-size:13px; color:#5f6368; padding: 12px;">로딩 중...</div>
+                        </div>
+                    </div>
+                    <div class="routine-col" id="col-yunseo">
+                        <div class="routine-col-header">윤서 <span class="progress-text" id="prog-yunseo">0%</span></div>
+                        <div class="routine-task-list" id="list-yunseo">
+                            <div style="font-size:13px; color:#5f6368; padding: 12px;">로딩 중...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Right: event list -->
@@ -1461,7 +1647,7 @@
         const CONFIG = {
             // Google Cloud Console → API 및 서비스 → 사용자 인증 정보 → OAuth 2.0 클라이언트 ID
             CLIENT_ID: '678232319527-4eovfst68dd7v6938a65abp45sp6l3l5.apps.googleusercontent.com',
-            SCOPES: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/tasks.readonly',
+            SCOPES: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/tasks',
         };
     </script>
     <!-- ================================================================ -->
@@ -1600,6 +1786,7 @@
 
             await loadCalendars();
             await fetchEvents();
+            await initRoutineSystem();
 
             // Show user email if available
             try {
@@ -2534,6 +2721,276 @@
                     }
                 }
             }
+        }
+
+        // ── Routine System Logic ──────────────────────────────────────────
+        let routineCalendarId = null;
+        const ROUTINE_CALENDAR_NAME = 'Routine History';
+        const ROUTINE_USERS = ['엄마', '윤호', '윤서'];
+        let routineTaskLists = {}; // { '엄마': 'listId', ... }
+        let routineTasks = {}; // { '엄마': [task1, task2], ... }
+        
+        function switchView(viewName) {
+            const schedTab = document.getElementById('tab-schedule');
+            const routTab = document.getElementById('tab-routine');
+            const schedCont = document.getElementById('schedule-view-container');
+            const routCont = document.getElementById('routine-layout');
+            const sidebar = document.getElementById('sidebar-right');
+
+            if(viewName === 'schedule') {
+                schedTab.classList.add('active');
+                routTab.classList.remove('active');
+                schedCont.style.display = 'flex';
+                routCont.style.display = 'none';
+                sidebar.style.display = 'flex';
+            } else {
+                schedTab.classList.remove('active');
+                routTab.classList.add('active');
+                schedCont.style.display = 'none';
+                routCont.style.display = 'flex';
+                sidebar.style.display = 'none';
+            }
+        }
+
+        async function initRoutineSystem() {
+            try {
+                await ensureRoutineCalendar();
+                await ensureRoutineTaskLists();
+                await checkAndResetDailyRoutines();
+                await renderRoutineHistory();
+                renderRoutineTasks();
+            } catch (err) {
+                console.error("Routine Init Error:", err);
+            }
+        }
+
+        async function ensureRoutineCalendar() {
+            let res = await gapi.client.calendar.calendarList.list();
+            let cals = res.result.items;
+            let histCal = cals.find(c => c.summary === ROUTINE_CALENDAR_NAME);
+            if (!histCal) {
+                res = await gapi.client.calendar.calendars.insert({
+                    resource: { summary: ROUTINE_CALENDAR_NAME }
+                });
+                histCal = res.result;
+            }
+            routineCalendarId = histCal.id;
+        }
+
+        async function ensureRoutineTaskLists() {
+            let res = await gapi.client.tasks.tasklists.list();
+            let lists = res.result.items || [];
+            
+            for (let user of ROUTINE_USERS) {
+                let userList = lists.find(l => l.title === user);
+                if (!userList) {
+                    res = await gapi.client.tasks.tasklists.insert({
+                        resource: { title: user }
+                    });
+                    userList = res.result;
+                }
+                routineTaskLists[user] = userList.id;
+            }
+        }
+
+        async function checkAndResetDailyRoutines() {
+            const todayStr = formatDateISO(TODAY); // "YYYY-MM-DD"
+            
+            let res = await gapi.client.calendar.events.list({
+                calendarId: routineCalendarId,
+                timeMin: todayStr + 'T00:00:00Z',
+                timeMax: todayStr + 'T23:59:59Z',
+                singleEvents: true
+            });
+            
+            let todayEvent = res.result.items.find(e => e.summary === 'ROUTINE_DATA');
+            let needReset = !todayEvent;
+            
+            for (let user of ROUTINE_USERS) {
+                let listId = routineTaskLists[user];
+                let tasksRes = await gapi.client.tasks.tasks.list({ tasklist: listId, showHidden: true, maxResults: 100 });
+                let tasks = tasksRes.result.items || [];
+                tasks.sort((a, b) => (a.position || '').localeCompare(b.position || ''));
+                routineTasks[user] = tasks;
+
+                if (needReset) {
+                    for (let task of routineTasks[user]) {
+                        if (task.status === 'completed') {
+                            task.status = 'needsAction';
+                            task.completed = null;
+                            await gapi.client.tasks.tasks.update({
+                                tasklist: listId,
+                                task: task.id,
+                                resource: task
+                            });
+                        }
+                    }
+                }
+            }
+            
+            if (needReset) {
+                await upsertRoutineEvent();
+            }
+        }
+
+        async function upsertRoutineEvent() {
+            const todayStr = formatDateISO(TODAY);
+            
+            let data = {};
+            for (let user of ROUTINE_USERS) {
+                let tasks = routineTasks[user] || [];
+                if (tasks.length === 0) {
+                    data[user] = 0;
+                } else {
+                    let completed = tasks.filter(t => t.status === 'completed').length;
+                    data[user] = Math.round((completed / tasks.length) * 100);
+                }
+            }
+            
+            let description = JSON.stringify(data);
+            
+            let res = await gapi.client.calendar.events.list({
+                calendarId: routineCalendarId,
+                timeMin: todayStr + 'T00:00:00Z',
+                timeMax: todayStr + 'T23:59:59Z',
+                singleEvents: true
+            });
+            let todayEvent = res.result.items.find(e => e.summary === 'ROUTINE_DATA');
+            
+            if (todayEvent) {
+                todayEvent.description = description;
+                await gapi.client.calendar.events.update({
+                    calendarId: routineCalendarId,
+                    eventId: todayEvent.id,
+                    resource: todayEvent
+                });
+            } else {
+                await gapi.client.calendar.events.insert({
+                    calendarId: routineCalendarId,
+                    resource: {
+                        summary: 'ROUTINE_DATA',
+                        description: description,
+                        start: { date: todayStr },
+                        end: { date: todayStr }
+                    }
+                });
+            }
+            
+            renderRoutineTasks();
+            await renderRoutineHistory();
+        }
+
+        async function toggleRoutineTask(user, taskId, isChecked) {
+            let task = routineTasks[user].find(t => t.id === taskId);
+            if (!task) return;
+            
+            task.status = isChecked ? 'completed' : 'needsAction';
+            if (!isChecked) task.completed = null;
+            
+            // Optimistic UI update
+            renderRoutineTasks();
+            
+            try {
+                await gapi.client.tasks.tasks.update({
+                    tasklist: routineTaskLists[user],
+                    task: task.id,
+                    resource: task
+                });
+                await upsertRoutineEvent();
+            } catch (err) {
+                console.error("Task toggle error:", err);
+                if (err.status === 403) {
+                    alert('보안 권한(Scope)이 부족합니다. 좌측 메뉴 상단의 로그아웃을 누른 뒤 다시 로그인하여 권한을 허용해주세요.');
+                } else {
+                    alert('작업 상태 업데이트에 실패했습니다.');
+                }
+                task.status = !isChecked ? 'completed' : 'needsAction';
+                renderRoutineTasks();
+            }
+        }
+
+        function renderRoutineTasks() {
+            for (let user of ROUTINE_USERS) {
+                let userKey = user === '엄마' ? 'mom' : (user === '윤호' ? 'yunho' : 'yunseo');
+                let listEl = document.getElementById('list-' + userKey);
+                let progEl = document.getElementById('prog-' + userKey);
+                
+                let tasks = routineTasks[user] || [];
+                if (tasks.length === 0) {
+                    listEl.innerHTML = '<div style="padding:12px; font-size:13px; color:#5f6368;">루틴 작업이 없습니다. 구글 Tasks에서 추가해주세요.</div>';
+                    progEl.innerText = '0%';
+                    continue;
+                }
+                
+                let completedCount = tasks.filter(t => t.status === 'completed').length;
+                let pct = Math.round((completedCount / tasks.length) * 100);
+                progEl.innerText = pct + '%';
+                
+                let html = '';
+                for (let task of tasks) {
+                    let isChecked = task.status === 'completed';
+                    html += `
+                        <div class="routine-task-item ${isChecked ? 'completed' : ''}">
+                            <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleRoutineTask('${user}', '${task.id}', this.checked)">
+                            <div class="routine-task-title">${task.title}</div>
+                        </div>
+                    `;
+                }
+                listEl.innerHTML = html;
+            }
+        }
+
+        async function renderRoutineHistory() {
+            const grid = document.getElementById('routine-history-grid');
+            if(!grid) return;
+            
+            let y = TODAY.getFullYear();
+            let m = TODAY.getMonth();
+            let firstDay = new Date(y, m, 1);
+            let lastDay = new Date(y, m + 1, 0);
+            
+            let res = await gapi.client.calendar.events.list({
+                calendarId: routineCalendarId,
+                timeMin: firstDay.toISOString(),
+                timeMax: new Date(y, m + 1, 1).toISOString(),
+                singleEvents: true
+            });
+            
+            let events = res.result.items || [];
+            let routineDataByDate = {}; 
+            
+            events.forEach(e => {
+                if(e.summary === 'ROUTINE_DATA' && e.start.date) {
+                    try {
+                        routineDataByDate[e.start.date] = JSON.parse(e.description);
+                    } catch(err){}
+                }
+            });
+            
+            let html = '';
+            for(let d=1; d<=lastDay.getDate(); d++) {
+                let dStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                let data = routineDataByDate[dStr] || { '엄마': 0, '윤호': 0, '윤서': 0 };
+                
+                html += `<div class="routine-hist-day">
+                    <div class="routine-hist-date">${d}일</div>
+                    <div class="routine-hist-bars">
+                        <div class="hist-bar-row">
+                            <span class="hist-bar-label">엄.</span>
+                            <div class="hist-bar-track"><div class="hist-bar-fill mom" style="width:${data['엄마'] || 0}%"></div></div>
+                        </div>
+                        <div class="hist-bar-row">
+                            <span class="hist-bar-label">호.</span>
+                            <div class="hist-bar-track"><div class="hist-bar-fill yunho" style="width:${data['윤호'] || 0}%"></div></div>
+                        </div>
+                        <div class="hist-bar-row">
+                            <span class="hist-bar-label">서.</span>
+                            <div class="hist-bar-track"><div class="hist-bar-fill yunseo" style="width:${data['윤서'] || 0}%"></div></div>
+                        </div>
+                    </div>
+                </div>`;
+            }
+            grid.innerHTML = html;
         }
 
         // ── Weather Widget Logic ──────────────────────────────────────────
