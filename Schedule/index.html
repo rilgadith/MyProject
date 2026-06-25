@@ -1311,23 +1311,25 @@
         .routine-history-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 1px;
-            background: #e0e0e0; /* border color */
-            border: 1px solid #e0e0e0;
         }
         .routine-hist-day {
-            padding: 2px 4px;
+            padding: 2px 0;
             display: flex;
             flex-direction: column;
-            background: white;
-            min-height: 40px;
+            background: transparent;
+            min-height: 48px;
         }
         .routine-hist-date {
-            font-size: 10px;
-            color: #5f6368;
-            margin-bottom: 2px;
-            font-weight: 500;
-            text-align: right;
+            font-size: 11px;
+            color: #3c4043;
+            margin: 0 auto 2px auto;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            text-align: center;
         }
         .routine-hist-bars {
             display: flex;
@@ -1335,6 +1337,7 @@
             gap: 2px;
             flex: 1;
             justify-content: flex-end;
+            padding: 0 3px;
         }
         .hist-bar-row {
             display: flex;
@@ -1562,7 +1565,7 @@
                 <div class="sidebar-logo-area">
                     <span class="logo-icon-sm">📅</span>
                     <span class="sidebar-app-title">My Calendar</span>
-                    <span class="sidebar-version">v1.1.4</span>
+                    <span class="sidebar-version">v1.1.5</span>
                 </div>
                 <div id="auth-user" class="sidebar-auth-user"></div>
                 <div class="sidebar-header-actions">
@@ -1571,6 +1574,15 @@
                 </div>
             </div>
             <div id="mini-calendar"></div>
+            <!-- Added #col-calendar here to replace mini-calendar on Routine view -->
+            <div id="col-calendar" style="display:none; padding-bottom: 16px;">
+                <div class="mini-cal-nav" style="margin-bottom: 8px;">
+                    <button class="mini-nav-btn" onclick="navigateRoutineMonth(-1)">&#8249;</button>
+                    <span class="mini-cal-title" id="routine-hist-title"></span>
+                    <button class="mini-nav-btn" onclick="navigateRoutineMonth(1)">&#8250;</button>
+                </div>
+                <div class="routine-history-grid" id="routine-history-grid"></div>
+            </div>
             <div id="calendars-list-container" class="calendars-list-container"></div>
         </div>
 
@@ -1596,10 +1608,6 @@
 
             <div id="routine-layout" class="routine-layout">
                 <div class="routine-tasks-container">
-                    <div class="routine-col" id="col-calendar" style="flex: 0 0 220px;">
-                        <div class="routine-col-header">달성 히스토리</div>
-                        <div class="routine-history-grid" id="routine-history-grid"></div>
-                    </div>
                     <div class="routine-col" id="col-mom">
                         <div class="routine-col-header">엄마 <span class="progress-text" id="prog-mom">0%</span></div>
                         <div class="routine-task-list" id="list-mom">
@@ -2740,8 +2748,11 @@
             const routTab = document.getElementById('tab-routine');
             const schedCont = document.getElementById('schedule-view-container');
             const routCont = document.getElementById('routine-layout');
-            const sidebarRight = document.getElementById('sidebar-right');
+            const sidebarRight = document.querySelector('.sidebar-right');
             const sidebarLeft = document.querySelector('.sidebar-left');
+            const miniCal = document.getElementById('mini-calendar');
+            const colCal = document.getElementById('col-calendar');
+            const calList = document.getElementById('calendars-list-container');
 
             if(viewName === 'schedule') {
                 schedTab.classList.add('active');
@@ -2749,14 +2760,20 @@
                 schedCont.style.display = 'flex';
                 routCont.style.display = 'none';
                 sidebarRight.style.display = 'flex';
-                sidebarLeft.style.display = 'flex';
+                sidebarLeft.style.display = '';
+                miniCal.style.display = 'block';
+                colCal.style.display = 'none';
+                calList.style.display = 'block';
             } else {
                 schedTab.classList.remove('active');
                 routTab.classList.add('active');
                 schedCont.style.display = 'none';
                 routCont.style.display = 'flex';
-                sidebarRight.style.display = 'none';
-                sidebarLeft.style.display = 'none';
+                sidebarRight.style.display = 'flex';
+                sidebarLeft.style.display = '';
+                miniCal.style.display = 'none';
+                colCal.style.display = 'block';
+                calList.style.display = 'none';
             }
         }
 
@@ -2948,14 +2965,23 @@
             }
         }
 
+        let routineViewDate = new Date();
+
+        function navigateRoutineMonth(diff) {
+            routineViewDate.setMonth(routineViewDate.getMonth() + diff);
+            renderRoutineHistory();
+        }
+
         async function renderRoutineHistory() {
             const grid = document.getElementById('routine-history-grid');
             if(!grid) return;
             
-            let y = TODAY.getFullYear();
-            let m = TODAY.getMonth();
+            let y = routineViewDate.getFullYear();
+            let m = routineViewDate.getMonth();
             let firstDay = new Date(y, m, 1);
             let lastDay = new Date(y, m + 1, 0);
+            
+            document.getElementById('routine-hist-title').innerText = `${y}년 ${KO_MONTHS[m]}`;
             
             let res = await gapi.client.calendar.events.list({
                 calendarId: routineCalendarId,
@@ -2978,14 +3004,14 @@
             let html = '';
             
             // 요일 헤더
-            let daysOfWeek = ['일', '월', '화', '수', '목', '금', '토'];
-            for(let dow of daysOfWeek) {
-                html += `<div style="background:white; text-align:center; font-size:10px; font-weight:bold; color:#5f6368; padding:4px 0;">${dow}</div>`;
+            for(let i=0; i<7; i++) {
+                const cls = i === 0 ? ' sun' : i === 6 ? ' sat' : '';
+                html += `<div class="mini-day-hd${cls}">${KO_DAYS_S[i]}</div>`;
             }
             
             // 빈 칸
             for(let i=0; i<firstDay.getDay(); i++) {
-                html += `<div style="background:#f8f9fa;"></div>`;
+                html += `<div style="background:transparent;"></div>`;
             }
             
             // 날짜 셀 렌더링
