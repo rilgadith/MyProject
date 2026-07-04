@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>뺄셈 연습장 생성기</title>
+    <title>엄마표 받아내림 뺄셈 연습장 생성기</title>
     <style>
         body {
             font-family: 'Malgun Gothic', sans-serif;
@@ -50,7 +50,7 @@
             background: white;
             width: 210mm;
             min-height: 297mm;
-            padding: 15mm 15mm; /* 상하 여백을 약간 줄여서 문제를 더 큼직하게 배치 */
+            padding: 25mm 20mm; 
             margin: 0 auto 20px auto;
             box-sizing: border-box;
             box-shadow: 0 0 10px rgba(0,0,0,0.05);
@@ -59,34 +59,38 @@
         .header {
             font-size: 18px;
             font-weight: bold;
-            margin-bottom: 40px;
+            margin-bottom: 50px; 
             border-bottom: 2px solid #333;
             padding-bottom: 15px;
-            text-align: center; /* 헤더 중앙 정렬 */
+            text-align: left; /* 상단 구분선과 정렬을 맞추기 위해 왼쪽 정렬 */
         }
 
         .grid-container {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            row-gap: 30px; /* ★폰트가 커져서 세로 간격을 살짝 조절★ */
-            column-gap: 30px;
-            justify-items: center; /* ★문제를 가로 중앙에 배치★ */
+            row-gap: 55px; 
+            column-gap: 20px;
+            /* justify-items: center; 를 삭제하여 왼쪽 열이 왼쪽 끝에 붙도록 수정 */
         }
 
         .problem-item {
-            /* ★기존 24px에서 30px로 확대★ */
             font-size: 30px; 
             font-family: 'Courier New', monospace;
-            font-weight: bold; /* ★더 선명하게 보이도록 볼드 처리★ */
+            font-weight: bold;
             white-space: pre;
             display: flex;
             align-items: center;
+            width: 100%;
         }
 
-        /* 체크박스 크기도 폰트 크기에 맞춰 키움 */
+        /* 오른쪽 열의 문제들만 살짝 여백을 주어 중앙 밸런스를 맞춤 */
+        .grid-container > .problem-item:nth-child(even) {
+            padding-left: 40px; 
+        }
+
         .check-box {
             font-size: 28px;
-            margin-right: 10px;
+            margin-right: 12px;
         }
 
         @media print {
@@ -113,7 +117,7 @@
 <body>
 
     <div class="control-panel">
-        <h2>뺄셈 연습장 생성기 (폰트 확대)</h2>
+        <h2>뺄셈 연습장 생성기</h2>
         <label for="setCount">생성할 세트 수 (장): </label>
         <input type="number" id="setCount" value="3" min="1" max="50">
         <button onclick="generateWorksheets()">문제 생성</button>
@@ -154,7 +158,6 @@
 
                 const headerDiv = document.createElement('div');
                 headerDiv.className = 'header';
-                // &nbsp; 기호를 사용하여 공백 강제 유지 및 '분 초' 변경
                 headerDiv.innerHTML = `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;월&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;일&nbsp;&nbsp;&nbsp;&nbsp;( 걸린시간:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;분&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;초,&nbsp;&nbsp;&nbsp;맞은 개수: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/ 20 )`;
                 pageDiv.appendChild(headerDiv);
 
