@@ -50,7 +50,7 @@
             background: white;
             width: 210mm;
             min-height: 297mm;
-            padding: 20mm 15mm;
+            padding: 15mm 15mm; /* 상하 여백을 약간 줄여서 문제를 더 큼직하게 배치 */
             margin: 0 auto 20px auto;
             box-sizing: border-box;
             box-shadow: 0 0 10px rgba(0,0,0,0.05);
@@ -62,20 +62,31 @@
             margin-bottom: 40px;
             border-bottom: 2px solid #333;
             padding-bottom: 15px;
+            text-align: center; /* 헤더 중앙 정렬 */
         }
 
         .grid-container {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            row-gap: 35px;
-            column-gap: 50px;
+            row-gap: 30px; /* ★폰트가 커져서 세로 간격을 살짝 조절★ */
+            column-gap: 30px;
+            justify-items: center; /* ★문제를 가로 중앙에 배치★ */
         }
 
         .problem-item {
-            font-size: 24px;
+            /* ★기존 24px에서 30px로 확대★ */
+            font-size: 30px; 
             font-family: 'Courier New', monospace;
-            font-weight: 500;
+            font-weight: bold; /* ★더 선명하게 보이도록 볼드 처리★ */
             white-space: pre;
+            display: flex;
+            align-items: center;
+        }
+
+        /* 체크박스 크기도 폰트 크기에 맞춰 키움 */
+        .check-box {
+            font-size: 28px;
+            margin-right: 10px;
         }
 
         @media print {
@@ -102,7 +113,7 @@
 <body>
 
     <div class="control-panel">
-        <h2>뺄셈 연습장 생성기</h2>
+        <h2>뺄셈 연습장 생성기 (폰트 확대)</h2>
         <label for="setCount">생성할 세트 수 (장): </label>
         <input type="number" id="setCount" value="3" min="1" max="50">
         <button onclick="generateWorksheets()">문제 생성</button>
@@ -151,14 +162,32 @@
                 gridDiv.className = 'grid-container';
 
                 for (let i = 0; i < 10; i++) {
+                    // 왼쪽 문제
                     const leftProb = document.createElement('div');
                     leftProb.className = 'problem-item';
-                    leftProb.textContent = `□  ${problems[i]}`;
+                    
+                    const leftCheck = document.createElement('span');
+                    leftCheck.className = 'check-box';
+                    leftCheck.textContent = '□';
+                    
+                    const leftText = document.createTextNode(` ${problems[i]}`);
+                    
+                    leftProb.appendChild(leftCheck);
+                    leftProb.appendChild(leftText);
                     gridDiv.appendChild(leftProb);
 
+                    // 오른쪽 문제
                     const rightProb = document.createElement('div');
                     rightProb.className = 'problem-item';
-                    rightProb.textContent = `□  ${problems[i + 10]}`;
+                    
+                    const rightCheck = document.createElement('span');
+                    rightCheck.className = 'check-box';
+                    rightCheck.textContent = '□';
+                    
+                    const rightText = document.createTextNode(` ${problems[i + 10]}`);
+                    
+                    rightProb.appendChild(rightCheck);
+                    rightProb.appendChild(rightText);
                     gridDiv.appendChild(rightProb);
                 }
 
