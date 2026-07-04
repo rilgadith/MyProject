@@ -27,7 +27,6 @@
             border: 1px solid #ccc;
             border-radius: 4px;
         }
-        /* 버튼 공통 스타일 */
         .control-panel button {
             padding: 8px 15px;
             font-size: 16px;
@@ -44,7 +43,6 @@
         .btn-generate:hover {
             background-color: #44bd32;
         }
-        /* ★인쇄 버튼 전용 스타일★ */
         .btn-print {
             background-color: #00a8ff;
         }
@@ -73,7 +71,8 @@
             margin-bottom: 50px; 
             border-bottom: 2px solid #333;
             padding-bottom: 15px;
-            text-align: left;
+            /* ★헤더 안의 글자들을 오른쪽 끝으로 정렬★ */
+            text-align: right; 
         }
 
         .grid-container {
@@ -109,7 +108,7 @@
                 padding: 0;
             }
             .control-panel {
-                display: none; /* 인쇄 시 제어판과 버튼들은 깔끔하게 가려집니다 */
+                display: none;
             }
             .print-page {
                 box-shadow: none;
@@ -130,14 +129,9 @@
         <label for="setCount">생성할 세트 수 (장): </label>
         <input type="number" id="setCount" value="4" min="1" max="50">
         
-        <!-- 버튼 배치 수정 -->
         <button class="btn-generate" onclick="generateWorksheets()">문제 생성</button>
-        <!-- ★태블릿용 인쇄 버튼 추가★ -->
         <button class="btn-print" onclick="window.print()">화면 인쇄 / PDF 저장</button>
         
-        <div class="instructions">
-            ※ PC에서는 <b>[Ctrl + P]</b>, 태블릿에서는 <b>[화면 인쇄]</b> 버튼을 누르면 인쇄나 PDF 저장이 가능합니다.
-        </div>
     </div>
 
     <div id="wrapper"></div>
@@ -172,6 +166,7 @@
 
                 const headerDiv = document.createElement('div');
                 headerDiv.className = 'header';
+                // text-align: right 속성이 적용되어 이제 오른쪽 끝에 붙습니다.
                 headerDiv.innerHTML = `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;월&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;일&nbsp;&nbsp;&nbsp;&nbsp;( 걸린시간:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;분&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;초,&nbsp;&nbsp;&nbsp;맞은 개수: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/ 20 )`;
                 pageDiv.appendChild(headerDiv);
 
