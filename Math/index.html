@@ -27,18 +27,29 @@
             border: 1px solid #ccc;
             border-radius: 4px;
         }
+        /* 버튼 공통 스타일 */
         .control-panel button {
-            padding: 8px 20px;
+            padding: 8px 15px;
             font-size: 16px;
-            background-color: #4cd137;
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             font-weight: bold;
+            margin: 5px;
         }
-        .control-panel button:hover {
+        .btn-generate {
+            background-color: #4cd137;
+        }
+        .btn-generate:hover {
             background-color: #44bd32;
+        }
+        /* ★인쇄 버튼 전용 스타일★ */
+        .btn-print {
+            background-color: #00a8ff;
+        }
+        .btn-print:hover {
+            background-color: #0097e6;
         }
         .instructions {
             margin-top: 10px;
@@ -62,7 +73,7 @@
             margin-bottom: 50px; 
             border-bottom: 2px solid #333;
             padding-bottom: 15px;
-            text-align: left; /* 상단 구분선과 정렬을 맞추기 위해 왼쪽 정렬 */
+            text-align: left;
         }
 
         .grid-container {
@@ -70,7 +81,6 @@
             grid-template-columns: 1fr 1fr;
             row-gap: 55px; 
             column-gap: 20px;
-            /* justify-items: center; 를 삭제하여 왼쪽 열이 왼쪽 끝에 붙도록 수정 */
         }
 
         .problem-item {
@@ -83,7 +93,6 @@
             width: 100%;
         }
 
-        /* 오른쪽 열의 문제들만 살짝 여백을 주어 중앙 밸런스를 맞춤 */
         .grid-container > .problem-item:nth-child(even) {
             padding-left: 40px; 
         }
@@ -100,7 +109,7 @@
                 padding: 0;
             }
             .control-panel {
-                display: none;
+                display: none; /* 인쇄 시 제어판과 버튼들은 깔끔하게 가려집니다 */
             }
             .print-page {
                 box-shadow: none;
@@ -120,9 +129,14 @@
         <h2>뺄셈 연습장 생성기</h2>
         <label for="setCount">생성할 세트 수 (장): </label>
         <input type="number" id="setCount" value="4" min="1" max="50">
-        <button onclick="generateWorksheets()">문제 생성</button>
+        
+        <!-- 버튼 배치 수정 -->
+        <button class="btn-generate" onclick="generateWorksheets()">문제 생성</button>
+        <!-- ★태블릿용 인쇄 버튼 추가★ -->
+        <button class="btn-print" onclick="window.print()">화면 인쇄 / PDF 저장</button>
+        
         <div class="instructions">
-            ※ 문제를 생성한 후 <b>[Ctrl + P]</b>를 누르면 A4 한 장당 한 세트씩 PDF로 저장하거나 인쇄할 수 있습니다.
+            ※ PC에서는 <b>[Ctrl + P]</b>, 태블릿에서는 <b>[화면 인쇄]</b> 버튼을 누르면 인쇄나 PDF 저장이 가능합니다.
         </div>
     </div>
 
@@ -165,7 +179,6 @@
                 gridDiv.className = 'grid-container';
 
                 for (let i = 0; i < 10; i++) {
-                    // 왼쪽 문제
                     const leftProb = document.createElement('div');
                     leftProb.className = 'problem-item';
                     
@@ -179,7 +192,6 @@
                     leftProb.appendChild(leftText);
                     gridDiv.appendChild(leftProb);
 
-                    // 오른쪽 문제
                     const rightProb = document.createElement('div');
                     rightProb.className = 'problem-item';
                     
