@@ -2,9 +2,8 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>엄마표 받아내림 뺄셈 연습장 생성기</title>
+    <title>뺄셈 연습장 생성기</title>
     <style>
-        /* 웹 화면 스타일 (인쇄할 때는 숨김) */
         body {
             font-family: 'Malgun Gothic', sans-serif;
             margin: 20px;
@@ -47,7 +46,6 @@
             color: #7f8c8d;
         }
 
-        /* 인쇄 및 화면 공통 문제지 스타일 */
         .print-page {
             background: white;
             width: 210mm;
@@ -62,7 +60,6 @@
             font-size: 18px;
             font-weight: bold;
             margin-bottom: 40px;
-            word-spacing: 10px;
             border-bottom: 2px solid #333;
             padding-bottom: 15px;
         }
@@ -70,18 +67,17 @@
         .grid-container {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            row-gap: 35px; /* 아이가 답안을 적기 편하도록 넉넉한 세로 간격 */
+            row-gap: 35px;
             column-gap: 50px;
         }
 
         .problem-item {
-            font-size: 24px; /* 인쇄했을 때 아이들이 보기 좋은 큼직한 서체 크기 */
-            font-family: 'Courier New', monospace; /* 숫자 정렬을 위해 고정폭 느낌 유지 */
+            font-size: 24px;
+            font-family: 'Courier New', monospace;
             font-weight: 500;
             white-space: pre;
         }
 
-        /* 🖨️ 인쇄(PDF 저장) 시 적용되는 스타일 */
         @media print {
             body {
                 background: white;
@@ -89,14 +85,13 @@
                 padding: 0;
             }
             .control-panel {
-                display: none; /* 제어판은 인쇄 안 됨 */
+                display: none;
             }
             .print-page {
                 box-shadow: none;
                 margin: 0;
-                page-break-after: always; /* 한 세트가 끝나면 무조건 다음 페이지로 넘김 */
+                page-break-after: always;
             }
-            /* 브라우저 기본 여백 초기화 */
             @page {
                 size: A4;
                 margin: 0;
@@ -106,7 +101,6 @@
 </head>
 <body>
 
-    <!-- 웹 화면 제어판 -->
     <div class="control-panel">
         <h2>뺄셈 연습장 생성기</h2>
         <label for="setCount">생성할 세트 수 (장): </label>
@@ -117,18 +111,15 @@
         </div>
     </div>
 
-    <!-- 문제지가 생성될 영역 -->
     <div id="wrapper"></div>
 
     <script>
-        // 받아내림이 있는 뺄셈 문제 20개 생성 함수
         function generateProblems() {
             const problems = [];
             while (problems.length < 20) {
-                const num1 = Math.floor(Math.random() * (24 - 10 + 1)) + 10; // 10 ~ 24
-                const num2 = Math.floor(Math.random() * (9 - 1 + 1)) + 1;    // 1 ~ 9
+                const num1 = Math.floor(Math.random() * (24 - 10 + 1)) + 10;
+                const num2 = Math.floor(Math.random() * (9 - 1 + 1)) + 1;
                 
-                // 받아내림 조건: 앞자리 1의 자리가 뒷자리보다 작아야 함
                 if ((num1 % 10) < num2) {
                     const problemStr = `${num1} - ${num2} = `;
                     if (!problems.includes(problemStr)) {
@@ -139,38 +130,32 @@
             return problems;
         }
 
-        // 입력받은 세트 수만큼 화면에 그리는 함수
         function generateWorksheets() {
             const setCount = document.getElementById('setCount').value;
             const wrapper = document.getElementById('wrapper');
-            wrapper.innerHTML = ''; // 기존 내용 초기화
+            wrapper.innerHTML = '';
 
             for (let s = 1; s <= setCount; s++) {
                 const problems = generateProblems();
                 
-                // 페이지 전체를 감싸는 div (A4 한 장 역할)
                 const pageDiv = document.createElement('div');
                 pageDiv.className = 'print-page';
 
-                // 헤더 영역
                 const headerDiv = document.createElement('div');
                 headerDiv.className = 'header';
-                headerDiv.innerHTML = `     월      일    ( 걸린시간:     분,   맞은 개수:      / 20 )`;
+                // &nbsp; 기호를 사용하여 공백 강제 유지 및 '분 초' 변경
+                headerDiv.innerHTML = `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;월&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;일&nbsp;&nbsp;&nbsp;&nbsp;( 걸린시간:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;분&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;초,&nbsp;&nbsp;&nbsp;맞은 개수: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/ 20 )`;
                 pageDiv.appendChild(headerDiv);
 
-                // 문제 그리드 영역 (좌우 2열 배치)
                 const gridDiv = document.createElement('div');
                 gridDiv.className = 'grid-container';
 
-                // 왼쪽 10개, 오른쪽 10개 세로 배치되도록 인덱스 정렬
                 for (let i = 0; i < 10; i++) {
-                    // 왼쪽 열 문제
                     const leftProb = document.createElement('div');
                     leftProb.className = 'problem-item';
                     leftProb.textContent = `□  ${problems[i]}`;
                     gridDiv.appendChild(leftProb);
 
-                    // 오른쪽 열 문제
                     const rightProb = document.createElement('div');
                     rightProb.className = 'problem-item';
                     rightProb.textContent = `□  ${problems[i + 10]}`;
@@ -182,7 +167,6 @@
             }
         }
 
-        // 페이지 로드 시 최초 3세트 자동 생성
         window.onload = generateWorksheets;
     </script>
 </body>
