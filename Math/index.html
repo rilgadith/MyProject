@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>뺄셈 연습장 생성기</title>
+    <title>연산 연습장 생성기</title>
     <style>
         body {
             font-family: 'Malgun Gothic', sans-serif;
@@ -14,18 +14,35 @@
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            max-width: 500px;
+            max-width: 550px;
             margin: 0 auto 30px auto;
             text-align: center;
         }
-        .control-panel input {
-            width: 80px;
+        .control-panel input[type="number"] {
+            width: 60px;
             padding: 8px;
             font-size: 16px;
             text-align: center;
-            margin-right: 10px;
+            margin-right: 15px;
             border: 1px solid #ccc;
             border-radius: 4px;
+        }
+        .radio-group {
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        .radio-group label {
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
         .control-panel button {
             padding: 8px 15px;
@@ -66,12 +83,11 @@
         }
 
         .header {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
             margin-bottom: 50px; 
             border-bottom: 2px solid #333;
             padding-bottom: 15px;
-            /* ★헤더 안의 글자들을 오른쪽 끝으로 정렬★ */
             text-align: right; 
         }
 
@@ -126,18 +142,33 @@
 
     <div class="control-panel">
         <h2>뺄셈 연습장 생성기</h2>
+        
+        <!-- 학습지 모드 선택 라디오 버튼 -->
+        <div class="radio-group">
+            <label>
+                <input type="radio" name="typeMode" value="sub" checked onclick="generateWorksheets()"> 뺄셈 (목표 40초)
+            </label>
+            <label>
+                <input type="radio" name="typeMode" value="mix" onclick="generateWorksheets()"> 곱·나눗셈 혼합 (목표 70초)
+            </label>
+        </div>
+
         <label for="setCount">생성할 세트 수 (장): </label>
         <input type="number" id="setCount" value="4" min="1" max="50">
         
         <button class="btn-generate" onclick="generateWorksheets()">문제 생성</button>
         <button class="btn-print" onclick="window.print()">화면 인쇄 / PDF 저장</button>
         
+        <div class="instructions">
+            ※ PC에서는 <b>[Ctrl + P]</b>, 태블릿에서는 <b>[화면 인쇄]</b> 버튼을 누르면 인쇄나 PDF 저장이 가능합니다.
+        </div>
     </div>
 
     <div id="wrapper"></div>
 
     <script>
-        function generateProblems() {
+        // 기존 받아내림 뺄셈 20개 생성
+        function generateSubProblems() {
             const problems = [];
             while (problems.length < 20) {
                 const num1 = Math.floor(Math.random() * (24 - 10 + 1)) + 10;
@@ -153,21 +184,81 @@
             return problems;
         }
 
+        // 새 기능: 곱셈, 나눗셈 혼합 20개 생성 (두자리*한자리, 두자리/한자리, 세자리/한자리)
+        function generateMixProblems() {
+            const problems = [];
+            const types = ['mul21', 'div21', 'div31']; // 문제 유형 3가지
+            
+            while (problems.length < 20) {
+                // 세 가지 유형 중 하나를 무작위 선택
+                const currentType = types[Math.floor(Math.random() * types.length)];
+                let problemStr = "";
+
+                if (currentType === 'mul21') {
+                    // 1. 두 자리 × 한 자리 (10~99 × 2~9)
+                    const num1 = Math.floor(Math.random() * (99 - 10 + 1)) + 10;
+                    const num2 = Math.floor(Math.random() * (9 - 2 + 1)) + 2;
+                    problemStr = `${num1} × ${num2} = `;
+                } 
+                else if (currentType === 'div21') {
+                    // 2. 두 자리 ÷ 한 자리 (나누어 떨어지도록 설계)
+                    // 한 자리 나누는 수 (2~9)
+                    const num2 = Math.floor(Math.random() * (9 - 2 + 1)) + 2; 
+                    // 몫이 두 자리가 되도록 설정 (몫: 10~49 정도, 나누어 떨어지는 범위 안에서 안전하게)
+                    const quotient = Math.floor(Math.random() * (49 - 10 + 1)) + 10;
+                    const num1 = quotient * num2;
+                    
+                    if (num1 >= 10 && num1 <= 99) { // 결과가 두 자리일 때만
+                        problemStr = `${num1} ÷ ${num2} = `;
+                    } else {
+                        continue;
+                    }
+                } 
+                else if (currentType === 'div31') {
+                    // 3. 세 자리 ÷ 한 자리 (나누어 떨어지도록 설계)
+                    const num2 = Math.floor(Math.random() * (9 - 2 + 1)) + 2;
+                    // 몫이 세 자리가 되도록 설정 (몫: 100~200 정도)
+                    const quotient = Math.floor(Math.random() * (200 - 100 + 1)) + 100;
+                    const num1 = quotient * num2;
+                    
+                    if (num1 >= 100 && num1 <= 999) { // 결과가 세 자리일 때만
+                        problemStr = `${num1} ÷ ${num2} = `;
+                    } else {
+                        continue;
+                    }
+                }
+
+                // 중복 방지 및 추가
+                if (problemStr && !problems.includes(problemStr)) {
+                    problems.push(problemStr);
+                }
+            }
+            return problems;
+        }
+
         function generateWorksheets() {
             const setCount = document.getElementById('setCount').value;
             const wrapper = document.getElementById('wrapper');
+            
+            // 라디오 버튼으로 현재 선택된 모드 파악 ('sub' 또는 'mix')
+            const mode = document.querySelector('input[name="typeMode"]:checked').value;
+            
             wrapper.innerHTML = '';
 
+            // 모드에 따라 목표 시간 텍스트 설정
+            const targetTimeText = (mode === 'sub') ? "목표시간: 40초" : "목표시간: 1분 10초";
+
             for (let s = 1; s <= setCount; s++) {
-                const problems = generateProblems();
+                // 모드에 맞는 문제 생성 함수 호출
+                const problems = (mode === 'sub') ? generateSubProblems() : generateMixProblems();
                 
                 const pageDiv = document.createElement('div');
                 pageDiv.className = 'print-page';
 
                 const headerDiv = document.createElement('div');
                 headerDiv.className = 'header';
-                // text-align: right 속성이 적용되어 이제 오른쪽 끝에 붙습니다.
-                headerDiv.innerHTML = `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;월&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;일&nbsp;&nbsp;&nbsp;&nbsp;( 걸린시간:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;분&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;초,&nbsp;&nbsp;&nbsp;맞은 개수: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/ 20 )`;
+                // 상단 헤더에 목표시간 텍스트 추가 완료
+                headerDiv.innerHTML = `[${targetTimeText}]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;월&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;일&nbsp;&nbsp;&nbsp;&nbsp;( 걸린시간:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;분&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;초,&nbsp;&nbsp;&nbsp;맞은 개수: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/ 20 )`;
                 pageDiv.appendChild(headerDiv);
 
                 const gridDiv = document.createElement('div');
