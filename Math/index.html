@@ -152,7 +152,7 @@
 <body>
 
     <div class="control-panel">
-        <h2>뺄셈 연습장 생성기</h2>
+        <h2>연산 연습장 생성기 <span style="font-size: 14px; color: #888; font-weight: normal; vertical-align: middle;">v1.2</span></h2>
         
         <!-- 학습지 모드 선택 라디오 버튼 -->
         <div class="radio-group">
@@ -268,8 +268,8 @@
 
                 const headerDiv = document.createElement('div');
                 headerDiv.className = 'header';
-                // 상단 헤더에 목표시간 텍스트 및 버전 추가
-                headerDiv.innerHTML = `<span style="float:left; color:#ccc; font-size:12px; font-weight:normal;">v1.2</span>[${targetTimeText}]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;월&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;일&nbsp;&nbsp;&nbsp;&nbsp;( 걸린시간:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;분&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;초,&nbsp;&nbsp;&nbsp;맞은 개수: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/ 20 )`;
+                // 상단 헤더에 목표시간 텍스트 추가
+                headerDiv.innerHTML = `[${targetTimeText}]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;월&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;일&nbsp;&nbsp;&nbsp;&nbsp;( 걸린시간:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;분&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;초,&nbsp;&nbsp;&nbsp;맞은 개수: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/ 20 )`;
                 pageDiv.appendChild(headerDiv);
 
                 const gridDiv = document.createElement('div');
