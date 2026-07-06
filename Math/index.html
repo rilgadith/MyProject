@@ -142,17 +142,44 @@
             .grid-container {
                 row-gap: 40px; /* 인쇄 시 문제 간격 축소하여 한 페이지에 쏙 들어가게 함 */
             }
+            
+            /* 2면 인쇄 모드용 추가 축소 스타일 */
+            .two-up .header {
+                margin-bottom: 15px; 
+                padding-bottom: 5px;
+            }
+            .two-up .grid-container {
+                row-gap: 15px;
+            }
+            .two-up .problem-item {
+                font-size: 22px;
+            }
             @page {
                 size: A4;
                 margin: 0;
             }
+        }
+        
+        .two-up {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .half-page {
+            flex: 1;
+            box-sizing: border-box;
+        }
+        .two-up .half-page:first-child {
+            border-bottom: 2px dashed #ddd; /* 절취선 */
+            margin-bottom: 15px;
+            padding-bottom: 15px;
         }
     </style>
 </head>
 <body>
 
     <div class="control-panel">
-        <h2>연산 연습장 생성기 <span style="font-size: 14px; color: #888; font-weight: normal; vertical-align: middle;">v1.3/span></h2>
+        <h2>연산 연습장 생성기 <span style="font-size: 14px; color: #888; font-weight: normal; vertical-align: middle;">v1.4</span></h2>
         
         <!-- 학습지 모드 선택 라디오 버튼 -->
         <div class="radio-group">
@@ -161,6 +188,16 @@
             </label>
             <label>
                 <input type="radio" name="typeMode" value="mix" onclick="generateWorksheets()"> 곱·나눗셈 혼합 (목표 70초)
+            </label>
+        </div>
+
+        <!-- 인쇄 레이아웃 선택 라디오 버튼 -->
+        <div class="radio-group" style="margin-top: 0;">
+            <label>
+                <input type="radio" name="layoutMode" value="1up" checked onclick="generateWorksheets()"> 1장 당 1세트 (기본)
+            </label>
+            <label>
+                <input type="radio" name="layoutMode" value="2up" onclick="generateWorksheets()"> 1장 당 2세트 (위아래)
             </label>
         </div>
 
@@ -248,29 +285,32 @@
         }
 
         function generateWorksheets() {
-            const setCount = document.getElementById('setCount').value;
+            const setCount = parseInt(document.getElementById('setCount').value);
             const wrapper = document.getElementById('wrapper');
             
             // 라디오 버튼으로 현재 선택된 모드 파악 ('sub' 또는 'mix')
             const mode = document.querySelector('input[name="typeMode"]:checked').value;
+            const layout = document.querySelector('input[name="layoutMode"]:checked').value;
             
             wrapper.innerHTML = '';
 
             // 모드에 따라 목표 시간 텍스트 설정
             const targetTimeText = (mode === 'sub') ? "목표시간: 40초" : "목표시간: 1분 10초";
 
+            let currentPrintPage = null;
+
             for (let s = 1; s <= setCount; s++) {
                 // 모드에 맞는 문제 생성 함수 호출
                 const problems = (mode === 'sub') ? generateSubProblems() : generateMixProblems();
                 
-                const pageDiv = document.createElement('div');
-                pageDiv.className = 'print-page';
+                const halfPageDiv = document.createElement('div');
+                halfPageDiv.className = layout === '2up' ? 'half-page' : 'full-page';
 
                 const headerDiv = document.createElement('div');
                 headerDiv.className = 'header';
                 // 상단 헤더에 목표시간 텍스트 추가
                 headerDiv.innerHTML = `[${targetTimeText}]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;월&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;일&nbsp;&nbsp;&nbsp;&nbsp;( 걸린시간:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;분&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;초,&nbsp;&nbsp;&nbsp;맞은 개수: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/ 20 )`;
-                pageDiv.appendChild(headerDiv);
+                halfPageDiv.appendChild(headerDiv);
 
                 const gridDiv = document.createElement('div');
                 gridDiv.className = 'grid-container';
@@ -303,8 +343,27 @@
                     gridDiv.appendChild(rightProb);
                 }
 
-                pageDiv.appendChild(gridDiv);
-                wrapper.appendChild(pageDiv);
+                halfPageDiv.appendChild(gridDiv);
+
+                if (layout === '1up') {
+                    const pageDiv = document.createElement('div');
+                    pageDiv.className = 'print-page';
+                    pageDiv.appendChild(halfPageDiv);
+                    wrapper.appendChild(pageDiv);
+                } else if (layout === '2up') {
+                    if (s % 2 === 1) {
+                        currentPrintPage = document.createElement('div');
+                        currentPrintPage.className = 'print-page two-up';
+                        currentPrintPage.appendChild(halfPageDiv);
+                        // 세트 수가 홀수로 끝날 경우 마지막 한 쪽만 넣고 추가
+                        if (s === setCount) {
+                            wrapper.appendChild(currentPrintPage);
+                        }
+                    } else {
+                        currentPrintPage.appendChild(halfPageDiv);
+                        wrapper.appendChild(currentPrintPage);
+                    }
+                }
             }
         }
 
