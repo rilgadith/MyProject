@@ -129,11 +129,18 @@
             .print-page {
                 box-shadow: none;
                 margin: 0;
+                padding: 10mm 15mm; /* 모바일 등 여백을 강제하는 환경을 위해 패딩 축소 */
                 width: 100%;
                 min-height: auto;
                 page-break-after: always;
                 page-break-inside: avoid;
                 break-inside: avoid;
+            }
+            .header {
+                margin-bottom: 30px; /* 인쇄 시 간격 약간 축소 */
+            }
+            .grid-container {
+                row-gap: 40px; /* 인쇄 시 문제 간격 축소하여 한 페이지에 쏙 들어가게 함 */
             }
             @page {
                 size: A4;
@@ -164,8 +171,7 @@
         <button class="btn-print" onclick="window.print()">화면 인쇄 / PDF 저장</button>
         
         <div class="instructions">
-            ※ PC에서는 <b>[Ctrl + P]</b>, 태블릿에서는 <b>[화면 인쇄]</b> 버튼을 누르면 인쇄나 PDF 저장이 가능합니다.<br>
-            <span style="color: #bbb; font-size: 11px;">버전: v1.1</span>
+            ※ PC에서는 <b>[Ctrl + P]</b>, 태블릿에서는 <b>[화면 인쇄]</b> 버튼을 누르면 인쇄나 PDF 저장이 가능합니다.
         </div>
     </div>
 
@@ -262,8 +268,8 @@
 
                 const headerDiv = document.createElement('div');
                 headerDiv.className = 'header';
-                // 상단 헤더에 목표시간 텍스트 추가 완료
-                headerDiv.innerHTML = `[${targetTimeText}]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;월&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;일&nbsp;&nbsp;&nbsp;&nbsp;( 걸린시간:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;분&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;초,&nbsp;&nbsp;&nbsp;맞은 개수: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/ 20 )`;
+                // 상단 헤더에 목표시간 텍스트 및 버전 추가
+                headerDiv.innerHTML = `<span style="float:left; color:#ccc; font-size:12px; font-weight:normal;">v1.2</span>[${targetTimeText}]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;월&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;일&nbsp;&nbsp;&nbsp;&nbsp;( 걸린시간:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;분&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;초,&nbsp;&nbsp;&nbsp;맞은 개수: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/ 20 )`;
                 pageDiv.appendChild(headerDiv);
 
                 const gridDiv = document.createElement('div');
