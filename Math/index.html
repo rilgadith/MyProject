@@ -129,7 +129,11 @@
             .print-page {
                 box-shadow: none;
                 margin: 0;
+                width: 100%;
+                min-height: auto;
                 page-break-after: always;
+                page-break-inside: avoid;
+                break-inside: avoid;
             }
             @page {
                 size: A4;
